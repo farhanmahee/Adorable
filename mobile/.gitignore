@@ -39,5 +39,17 @@ yarn-error.*
 app-example
 
 # generated native folders
-/ios
 /android
+
+# ios folder has been changed
+ios/
+# or: ios/**
+
+# unignore the dir, then the files
+!ios/
+!ios/Podfile
+!ios/Podfile.lock
+
+# keep noisy stuff ignored
+ios/Pods/
+ios/build/

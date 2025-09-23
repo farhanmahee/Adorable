@@ -1,4 +1,5 @@
 import ExpoModulesCore
+import EXManifest
 
 public class MyModule: Module {
   // Each module class must implement the definition function. The definition consists of components

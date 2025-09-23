@@ -13,6 +13,7 @@ Pod::Spec.new do |s|
   s.static_framework = true
 
   s.dependency 'ExpoModulesCore'
+  s.dependency 'EXManifests', :git => 'https://github.com/expo/expo.git', :commit => 'db74c85', :subdirectory => 'packages/expo-manifests/ios'
 
   # Swift/Objective-C compatibility
   s.pod_target_xcconfig = {
