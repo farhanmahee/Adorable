@@ -1,16 +1,17 @@
 import Foundation
+import Dispatch
 import ExpoModulesCore
 import EXManifests
 
 /**
- * Production-ready AppLoader that works the same in dev and prod
- * Creates its own bridge with proper module registration
- * Uses runtime reflection to avoid import issues with React framework
+ * AppLoader that creates a separate bridge for external apps
+ * Maintains isolation between main app and loaded apps
  */
 public class AppLoader: NSObject {
   
-  private var appBridge: AnyObject? // Will hold RCTBridge
-  private weak var window: UIWindow?
+  private weak var originalRootViewController: UIViewController?
+  private var appRootViewController: UIViewController?
+  private var appBridge: AnyObject? // Will hold the separate RCTBridge for external app
   private var bundleURL: URL?
   
   public override init() {
@@ -24,15 +25,24 @@ public class AppLoader: NSObject {
         return
       }
       
-      // Invalidate the bridge if it exists
+      // Invalidate the external app bridge if it exists
       if let bridge = self.appBridge {
-        print("🔴 Closing app and invalidating bridge")
+        print("🔴 Closing external app and invalidating bridge")
         _ = bridge.perform(NSSelectorFromString("invalidate"))
         self.appBridge = nil
       }
       
-      // Reset the window to show the original app
-      promise.resolve(["success": true, "closed": true])
+      // Restore the original root view controller
+      if let window = UIApplication.shared.delegate?.window as? UIWindow,
+         let originalVC = self.originalRootViewController {
+        print("🔴 Restoring original app view")
+        window.rootViewController = originalVC
+        window.makeKeyAndVisible()
+        self.appRootViewController = nil
+        promise.resolve(["success": true, "closed": true])
+      } else {
+        promise.reject("NO_ORIGINAL", "No original view to restore")
+      }
     }
   }
   
@@ -41,7 +51,6 @@ public class AppLoader: NSObject {
     promise: Promise
   ) {
     print("⚡️ loadAndShowApp called at: \(Date())")
-    print("📍 Call stack: \(Thread.callStackSymbols.prefix(5).joined(separator: "\n"))")
     
     let bundleUrlString = manifest.bundleUrl()
     
@@ -54,46 +63,52 @@ public class AppLoader: NSObject {
     
     print("🟢 Loading app from: \(bundleUrl.absoluteString)")
     
-    // Get the main window
-    guard let window = UIApplication.shared.delegate?.window as? UIWindow else {
-      promise.reject("NO_WINDOW", "Could not access application window")
-      return
-    }
-    self.window = window
-    
-    // Clean up existing bridge if any
-    if let existingBridge = self.appBridge {
-      print("🔄 Invalidating existing bridge...")
-      _ = existingBridge.perform(NSSelectorFromString("invalidate"))
-      self.appBridge = nil
-    }
-    
-    DispatchQueue.main.async { [weak self] in
-      guard let self = self else { return }
+    // Create work item for main thread execution
+    let workItem = DispatchWorkItem {
+      // Get the main window
+      guard let window = UIApplication.shared.delegate?.window as? UIWindow else {
+        promise.reject("NO_WINDOW", "Could not access application window")
+        return
+      }
       
-      // Get RCTBridge class
-      guard let bridgeClass = NSClassFromString("RCTBridge") as? NSObject.Type else {
+      // Store the original root view controller if not already stored
+      if self.originalRootViewController == nil {
+        self.originalRootViewController = window.rootViewController
+      }
+      
+      // Clean up existing external app bridge if any
+      if let existingBridge = self.appBridge {
+        print("🔄 Invalidating existing external app bridge...")
+        _ = existingBridge.perform(NSSelectorFromString("invalidate"))
+        self.appBridge = nil
+      }
+      
+      // Create a new bridge for the external app
+      print("🔨 Creating new bridge for external app...")
+      
+      // We need to create the bridge using runtime methods since we can't import React directly
+      guard let bridgeClass = NSClassFromString("RCTBridge") else {
         promise.reject("NO_BRIDGE_CLASS", "RCTBridge class not found")
         return
       }
       
-      // Create the bridge with proper configuration
-      print("🔨 Creating new bridge...")
+      // Use the Objective-C runtime to allocate and initialize the bridge
+      // First, get the alloc method
+      let allocMethod = class_getClassMethod(bridgeClass as? AnyClass, NSSelectorFromString("alloc"))
+      let allocIMP = method_getImplementation(allocMethod!)
+      typealias AllocFunc = @convention(c) (AnyClass, Selector) -> AnyObject
+      let allocFunc = unsafeBitCast(allocIMP, to: AllocFunc.self)
+      let allocatedBridge = allocFunc(bridgeClass as! AnyClass, NSSelectorFromString("alloc"))
       
-      // Create an instance of RCTBridge
-      let bridge = bridgeClass.init()
+      // Now initialize with delegate
+      let initSelector = NSSelectorFromString("initWithDelegate:launchOptions:")
+      let _ = (allocatedBridge as! NSObject).perform(initSelector, with: self, with: nil)
       
-      // Set the delegate and launch options using setValue
-      bridge.setValue(self, forKey: "delegate")
-      bridge.setValue([:] as [String: Any], forKey: "launchOptions")
-      
-      // Initialize the bridge
-      bridge.perform(NSSelectorFromString("setUp"))
-      
-      self.appBridge = bridge
+      // Store the initialized bridge
+      self.appBridge = allocatedBridge as? NSObject
       
       // Get RCTRootView class
-      guard let rootViewClass = NSClassFromString("RCTRootView") as? UIView.Type else {
+      guard let rootViewClass = NSClassFromString("RCTRootView") else {
         promise.reject("NO_ROOTVIEW_CLASS", "RCTRootView class not found")
         return
       }
@@ -102,17 +117,27 @@ public class AppLoader: NSObject {
       let moduleName = manifest.slug() ?? "main"
       print("📦 Creating root view for module: \(moduleName)")
       
-      // Create RCTRootView instance
-      let rootView = rootViewClass.init()
+      // Use the Objective-C runtime to allocate RCTRootView
+      let rootViewAllocMethod = class_getClassMethod(rootViewClass as? AnyClass, NSSelectorFromString("alloc"))
+      let rootViewAllocIMP = method_getImplementation(rootViewAllocMethod!)
+      typealias RootViewAllocFunc = @convention(c) (AnyClass, Selector) -> AnyObject
+      let rootViewAllocFunc = unsafeBitCast(rootViewAllocIMP, to: RootViewAllocFunc.self)
+      let allocatedRootView = rootViewAllocFunc(rootViewClass as! AnyClass, NSSelectorFromString("alloc")) as! NSObject
       
-      // Configure the root view with bridge and module name
-      rootView.setValue(self.appBridge, forKey: "bridge")
-      rootView.setValue(moduleName, forKey: "moduleName")
-      rootView.setValue([:] as [String: Any], forKey: "appProperties")
+      // Initialize RCTRootView with bridge, module name, and initial properties
+      let rootViewInitSelector = NSSelectorFromString("initWithBridge:moduleName:initialProperties:")
+      let initialProperties = ["manifestUrl": manifest.bundleUrl()] as NSDictionary
       
-      // Trigger the root view to load
-      if rootView.responds(to: NSSelectorFromString("runApplication")) {
-        rootView.perform(NSSelectorFromString("runApplication"))
+      // Use Objective-C runtime to call the 3-parameter initializer
+      typealias RootViewInitFunc = @convention(c) (NSObject, Selector, AnyObject?, NSString?, NSDictionary?) -> NSObject
+      let rootViewMethod = allocatedRootView.method(for: rootViewInitSelector)
+      let rootViewInitFunc = unsafeBitCast(rootViewMethod, to: RootViewInitFunc.self)
+      let _ = rootViewInitFunc(allocatedRootView, rootViewInitSelector, self.appBridge, moduleName as NSString, initialProperties)
+      
+      // Cast to UIView for use
+      guard let rootView = allocatedRootView as? UIView else {
+        promise.reject("ROOTVIEW_CAST_FAILED", "Failed to cast RCTRootView to UIView")
+        return
       }
       
       // Apply background color if specified
@@ -124,12 +149,13 @@ public class AppLoader: NSObject {
       // Create root view controller
       let rootViewController = UIViewController()
       rootViewController.view = rootView
+      self.appRootViewController = rootViewController
       
       // Set as window's root
       window.rootViewController = rootViewController
       window.makeKeyAndVisible()
       
-      print("✅ App loaded successfully!")
+      print("✅ External app loaded successfully!")
       
       promise.resolve([
         "success": true,
@@ -138,6 +164,9 @@ public class AppLoader: NSObject {
         "slug": manifest.slug() as Any
       ])
     }
+    
+    // Execute work item on main queue
+    DispatchQueue.main.async(execute: workItem)
   }
   
   private func hexStringToUIColor(hex: String?) -> UIColor? {
@@ -161,29 +190,20 @@ public class AppLoader: NSObject {
 extension AppLoader {
   
   // This will be called by RCTBridge via runtime
-  @objc public func sourceURL(for bridge: AnyObject) -> URL? {
+  @objc(sourceURLForBridge:)
+  public func sourceURL(for bridge: AnyObject) -> URL? {
     print("🔗 Bridge requesting source URL: \(self.bundleURL?.absoluteString ?? "nil")")
     return self.bundleURL
   }
   
   // This will be called by RCTBridge via runtime for extra modules
-  @objc public func extraModules(for bridge: AnyObject) -> [Any] {
+  @objc(extraModulesForBridge:)
+  public func extraModules(for bridge: AnyObject) -> [Any] {
     print("📦 Providing extra modules for bridge...")
     
     var modules: [Any] = []
     
-    // 1. Get modules from the AppDelegate if available
-    if let appDelegate = UIApplication.shared.delegate {
-      let selector = NSSelectorFromString("extraModulesForBridge:")
-      if appDelegate.responds(to: selector),
-         let result = appDelegate.perform(selector, with: bridge),
-         let delegateModules = result.takeUnretainedValue() as? [Any] {
-        print("   ✓ Added \(delegateModules.count) modules from AppDelegate")
-        modules.append(contentsOf: delegateModules)
-      }
-    }
-    
-    // 2. Add Expo modules using the generated ExpoModulesProvider
+    // 1. Add Expo modules using the generated ExpoModulesProvider
     if let expoModulesProviderClass = NSClassFromString("ExpoModulesProvider") as? NSObject.Type {
       let provider = expoModulesProviderClass.init()
       let selector = NSSelectorFromString("getModulesForBridge:")
@@ -195,9 +215,25 @@ extension AppLoader {
       }
     }
     
-    // 3. Manually add essential React Native modules if not already present
+    // 2. Add essential React Native modules
+    let essentialModuleClasses = [
+      "RCTAsyncLocalStorage",
+      "RCTNetworking",
+      "RCTImageLoader",
+      "RCTUIManager",
+      "RCTEventDispatcher"
+    ]
+    
+    for className in essentialModuleClasses {
+      if let moduleClass = NSClassFromString(className) as? NSObject.Type {
+        let module = moduleClass.init()
+        modules.append(module)
+        print("   ✓ Added essential module: \(className)")
+      }
+    }
+    
+    // 3. Add dev support modules in debug builds
     #if DEBUG
-    // Add dev support modules in debug builds
     let devModuleClasses = ["RCTDevMenu", "RCTDevSettings"]
     
     for className in devModuleClasses {
@@ -214,7 +250,8 @@ extension AppLoader {
   }
   
   // Optional: Handle missing modules
-  @objc public func bridge(_ bridge: AnyObject, didNotFindModule moduleName: String) -> Bool {
+  @objc(bridge:didNotFindModule:)
+  public func bridge(_ bridge: AnyObject, didNotFindModule moduleName: String) -> Bool {
     print("⚠️ Bridge could not find module: \(moduleName)")
     // Return false to use default behavior
     return false
