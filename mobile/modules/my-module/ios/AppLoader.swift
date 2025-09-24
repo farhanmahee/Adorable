@@ -2,13 +2,12 @@ import Foundation
 import ExpoModulesCore
 import EXManifests
 import React
-import Expo
 
-public class AppLoader {
-  private var currentRootView: UIView?
-  private var currentManifest: Manifest?
+public class AppLoader: NSObject {
   
-  public init() {}
+  public override init() {
+    super.init()
+  }
   
   public func loadAndShowApp(
     manifest: Manifest,
@@ -21,81 +20,30 @@ public class AppLoader {
       return
     }
     
-    print("Loading app from bundle URL: \(bundleUrl)")
+    print("🟢 Loading app via EXDevLauncherController: \(bundleUrl.absoluteString)")
     
-    // Get the app delegate without knowing its specific type
-    guard let appDelegate = UIApplication.shared.delegate as? NSObject else {
-      promise.reject("NO_APP_DELEGATE", "Could not get app delegate")
+    // Get the EXDevLauncherController singleton
+    guard let controllerClass = NSClassFromString("EXDevLauncherController") as? NSObject.Type else {
+      promise.reject("NO_CONTROLLER", "EXDevLauncherController not found")
       return
     }
     
-    // Use KVC to get the factory
-    guard let factory = appDelegate.value(forKey: "reactNativeFactory") as? NSObject else {
-      promise.reject("NO_FACTORY", "Could not get factory from app delegate")
+    guard let controller = controllerClass.perform(NSSelectorFromString("sharedInstance"))?.takeUnretainedValue() else {
+      promise.reject("NO_INSTANCE", "Could not get EXDevLauncherController instance")
       return
     }
     
-    // Check if factory responds to recreateRootView selector
-    let selector = NSSelectorFromString("recreateRootViewWithBundleURL:moduleName:initialProps:launchOptions:")
-    guard factory.responds(to: selector) else {
-      promise.reject("NO_METHOD", "Factory doesn't respond to recreateRootView")
+    // Call loadApp:onSuccess:onError: using Objective-C runtime
+    let loadAppSelector = NSSelectorFromString("loadApp:onSuccess:onError:")
+    
+    guard controller.responds(to: loadAppSelector) else {
+      promise.reject("NO_METHOD", "loadApp method not found")
       return
     }
     
-    // Reset the factory to allow recreation
-    if let rootViewFactory = factory.value(forKey: "rootViewFactory") as? NSObject {
-      if RCTIsNewArchEnabled() {
-        rootViewFactory.setValue(nil as Any?, forKey: "_reactHost")
-      } else {
-        rootViewFactory.setValue(nil, forKey: "bridge")
-      }
-    }
-    factory.setValue(nil, forKey: "bridge")
-    
-    // Call recreateRootView using Objective-C runtime
-    typealias RecreateRootViewFunc = @convention(c) (Any, Selector, URL?, String?, [AnyHashable: Any]?, [AnyHashable: Any]?) -> UIView
-    let method = class_getInstanceMethod(type(of: factory), selector)!
-    let implementation = method_getImplementation(method)
-    let typedImplementation = unsafeBitCast(implementation, to: RecreateRootViewFunc.self)
-    
-    let rootView = typedImplementation(
-      factory,
-      selector,
-      bundleUrl,
-      "main",
-      nil,
-      nil
-    )
-    
-    // Apply background color from manifest if available
-    if let backgroundColor = manifest.iosOrRootBackgroundColor() {
-      rootView.backgroundColor = self.hexStringToColor(backgroundColor)
-    }
-    
-    self.currentRootView = rootView
-    self.currentManifest = manifest
-    
-    // Get the key window
-    var window: UIWindow?
-    if #available(iOS 15.0, *) {
-      window = UIApplication.shared.connectedScenes
-        .compactMap { $0 as? UIWindowScene }
-        .flatMap { $0.windows }
-        .first { $0.isKeyWindow }
-    } else {
-      window = UIApplication.shared.windows.first { $0.isKeyWindow }
-    }
-    
-    guard let keyWindow = window else {
-      promise.reject("NO_WINDOW", "Could not find key window")
-      return
-    }
-    
-    let hostVC = UIViewController()
-    hostVC.view = rootView
-    
-    // Present full screen
-    keyWindow.rootViewController?.present(hostVC, animated: true) {
+    // Create callback blocks
+    let onSuccess: @convention(block) () -> Void = {
+      print("🟢 App loaded successfully!")
       promise.resolve([
         "success": true,
         "bundleUrl": bundleUrlString,
@@ -103,20 +51,20 @@ public class AppLoader {
         "slug": manifest.slug() as Any
       ])
     }
-  }
-  
-  // Helper function to convert hex color string to UIColor
-  private func hexStringToColor(_ hex: String) -> UIColor {
-    var hexSanitized = hex.trimmingCharacters(in: .whitespacesAndNewlines)
-    hexSanitized = hexSanitized.replacingOccurrences(of: "#", with: "")
     
-    var rgb: UInt64 = 0
-    Scanner(string: hexSanitized).scanHexInt64(&rgb)
+    let onError: @convention(block) (NSError) -> Void = { error in
+      print("❌ Failed to load app: \(error.localizedDescription)")
+      promise.reject("LOAD_FAILED", error.localizedDescription)
+    }
     
-    let red = CGFloat((rgb & 0xFF0000) >> 16) / 255.0
-    let green = CGFloat((rgb & 0x00FF00) >> 8) / 255.0
-    let blue = CGFloat(rgb & 0x0000FF) / 255.0
+    // Perform the method call
+    typealias LoadAppFunc = @convention(c) (AnyObject, Selector, URL, Any?, Any?) -> Void
+    let method = class_getInstanceMethod(type(of: controller), loadAppSelector)!
+    let implementation = method_getImplementation(method)
+    let typedFunc = unsafeBitCast(implementation, to: LoadAppFunc.self)
     
-    return UIColor(red: red, green: green, blue: blue, alpha: 1.0)
+    typedFunc(controller, loadAppSelector, bundleUrl, onSuccess, onError)
+    
+    print("🟢 loadApp called, waiting for response...")
   }
 }
