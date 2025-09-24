@@ -40,7 +40,7 @@ public class MyModule: Module {
     }
 
     AsyncFunction("closeApp") { (promise: Promise) in
-      print("Not implemented yet")
+      self.appLoader.closeApp(promise: promise)
     }
 
     AsyncFunction("setValueAsync") { (value: String) in

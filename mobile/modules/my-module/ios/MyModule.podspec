@@ -17,13 +17,15 @@ Pod::Spec.new do |s|
   s.dependency 'EXUpdatesInterface'
   s.dependency 'Alamofire', '~> 5.0'
   s.dependency 'React-Core'
+  s.dependency 'React-RCTAppDelegate'
   s.dependency 'Expo'
-  s.dependency 'React-RCTAppDelegate' 
-  s.dependency 'ReactAppDependencyProvider'
 
   # Swift/Objective-C compatibility
   s.pod_target_xcconfig = {
     'DEFINES_MODULE' => 'YES',
+    'SWIFT_OPTIMIZATION_LEVEL' => '-Onone',
+    'CLANG_ENABLE_MODULES' => 'YES',
+    'SWIFT_VERSION' => '5.0'
   }
 
   s.source_files = "**/*.{h,m,mm,swift,hpp,cpp}"

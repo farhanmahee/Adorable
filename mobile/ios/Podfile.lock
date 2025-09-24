@@ -285,7 +285,6 @@ PODS:
     - EXUpdatesInterface
     - React-Core
     - React-RCTAppDelegate
-    - ReactAppDependencyProvider
   - RCTDeprecation (0.81.4)
   - RCTRequired (0.81.4)
   - RCTTypeSafety (0.81.4):
@@ -2542,7 +2541,7 @@ SPEC CHECKSUMS:
   libavif: 84bbb62fb232c3018d6f1bab79beea87e35de7b7
   libdav1d: 23581a4d8ec811ff171ed5e2e05cd27bad64c39f
   libwebp: 02b23773aedb6ff1fd38cec7a77b81414c6842a8
-  MyModule: f54fe7050229eb1ab422dd4b2fd139dae526da67
+  MyModule: 91db460d442d296d7633bd4814b7131dec7cb87e
   RCTDeprecation: 7487d6dda857ccd4cb3dd6ecfccdc3170e85dcbc
   RCTRequired: 54128b7df8be566881d48c7234724a78cb9b6157
   RCTTypeSafety: d2b07797a79e45d7b19e1cd2f53c79ab419fe217
