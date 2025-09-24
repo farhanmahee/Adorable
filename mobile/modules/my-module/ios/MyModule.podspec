@@ -14,8 +14,12 @@ Pod::Spec.new do |s|
 
   s.dependency 'ExpoModulesCore'
   s.dependency 'EXManifests'
+  s.dependency 'EXUpdatesInterface'
   s.dependency 'Alamofire', '~> 5.0'
-
+  s.dependency 'React-Core'
+  s.dependency 'Expo'
+  s.dependency 'React-RCTAppDelegate' 
+  s.dependency 'ReactAppDependencyProvider'
 
   # Swift/Objective-C compatibility
   s.pod_target_xcconfig = {

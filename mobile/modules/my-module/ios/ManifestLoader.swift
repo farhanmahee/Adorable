@@ -75,4 +75,49 @@ public class ManifestLoader {
         }
       }
   }
+  
+  // New method with completion handler for internal use
+  public static func loadManifestObject(
+    from urlString: String,
+    completion: @escaping (Result<Manifest, Error>) -> Void
+  ) {
+    guard let url = URL(string: urlString) else {
+      completion(.failure(NSError(domain: "ManifestLoader", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])))
+      return
+    }
+    
+    let headers: HTTPHeaders = [
+      "expo-platform": "ios",
+      "accept": "application/expo+json,application/json"
+    ]
+    
+    AF.request(url, headers: headers)
+      .validate(statusCode: 200..<300)
+      .responseJSON { response in
+        switch response.result {
+        case .success(let value):
+          guard var manifestJSON = value as? [String: Any] else {
+            completion(.failure(NSError(domain: "ManifestLoader", code: 2, userInfo: [NSLocalizedDescriptionKey: "Invalid manifest JSON"])))
+            return
+          }
+          
+          // Modify bundleUrl if it exists
+          if let launchAsset = manifestJSON["launchAsset"] as? [String: Any],
+             let bundleUrl = launchAsset["url"] as? String {
+            var modifiedLaunchAsset = launchAsset
+            modifiedLaunchAsset["url"] = modifyUrl(bundleUrl)
+            manifestJSON["launchAsset"] = modifiedLaunchAsset
+            
+            print("Original bundleUrl: \(bundleUrl)")
+            print("Modified bundleUrl: \(modifiedLaunchAsset["url"]!)")
+          }
+          
+          let manifest = ManifestFactory.manifest(forManifestJSON: manifestJSON)
+          completion(.success(manifest))
+          
+        case .failure(let error):
+          completion(.failure(error))
+        }
+      }
+  }
 }

@@ -15,7 +15,7 @@ prepare_react_native_project!
 target 'Adorable' do
   # this is all written by Adorable team
   pod 'EXManifests', :path => '../../vendor/expo/packages/expo-manifests/ios'
-
+  # pod 'React-Core', :path => '../../vendor/expo/react-native-lab/react-native/packages/react-native'
 
 
 

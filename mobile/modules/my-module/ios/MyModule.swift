@@ -3,48 +3,53 @@ import EXManifests
 import Alamofire
 
 public class MyModule: Module {
-  // Each module class must implement the definition function. The definition consists of components
-  // that describes the module's functionality and behavior.
-  // See https://docs.expo.dev/modules/module-api for more details about available components.
+  private let appLoader = AppLoader()
+  
   public func definition() -> ModuleDefinition {
-    // Sets the name of the module that JavaScript code will use to refer to the module. Takes a string as an argument.
-    // Can be inferred from module's class name, but it's recommended to set it explicitly for clarity.
-    // The module will be accessible from `requireNativeModule('MyModule')` in JavaScript.
     Name("MyModule")
 
-    // Defines constant property on the module.
     Constant("PI") {
       Double.pi
     }
 
-    // Defines event names that the module can send to JavaScript.
     Events("onChange")
 
-    // Defines a JavaScript synchronous function that runs the native code on the JavaScript thread.
     Function("hello") {
-      return "Hello from iOS — this is a function and I can go off of this — confirm update A 👋"
+      return "Hello from iOS — this is a function and I can go off of this 👋"
     }
 
     AsyncFunction("loadManifest") { (promise: Promise) in
       ManifestLoader.loadManifest(
-        from: "https://syyxc.vm.freestyle.sh",
+        from: "https://xixns.vm.freestyle.sh",
         promise: promise
       )
     }
 
-    // Defines a JavaScript function that always returns a Promise and whose native code
-    // is by default dispatched on the different thread than the JavaScript runtime runs on.
+    AsyncFunction("loadAndShowAppFromManifest") { (promise: Promise) in
+      // Use the new completion handler method
+      ManifestLoader.loadManifestObject(from: "https://xixns.vm.freestyle.sh") { result in
+        switch result {
+        case .success(let manifest):
+          // Load and show the app with the manifest
+          self.appLoader.loadAndShowApp(manifest: manifest, promise: promise)
+          
+        case .failure(let error):
+          promise.reject("MANIFEST_LOAD_ERROR", error.localizedDescription)
+        }
+      }
+    }
+
+    AsyncFunction("closeApp") { (promise: Promise) in
+      print("Not implemented yet")
+    }
+
     AsyncFunction("setValueAsync") { (value: String) in
-      // Send an event to JavaScript.
       self.sendEvent("onChange", [
         "value": value
       ])
     }
 
-    // Enables the module to be used as a native view. Definition components that are accepted as part of the
-    // view definition: Prop, Events.
     View(MyModuleView.self) {
-      // Defines a setter for the `url` prop.
       Prop("url") { (view: MyModuleView, url: URL) in
         if view.webView.url != url {
           view.webView.load(URLRequest(url: url))

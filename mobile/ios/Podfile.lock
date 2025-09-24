@@ -280,7 +280,12 @@ PODS:
   - MyModule (1.0.0):
     - Alamofire (~> 5.0)
     - EXManifests
+    - Expo
     - ExpoModulesCore
+    - EXUpdatesInterface
+    - React-Core
+    - React-RCTAppDelegate
+    - ReactAppDependencyProvider
   - RCTDeprecation (0.81.4)
   - RCTRequired (0.81.4)
   - RCTTypeSafety (0.81.4):
@@ -2537,7 +2542,7 @@ SPEC CHECKSUMS:
   libavif: 84bbb62fb232c3018d6f1bab79beea87e35de7b7
   libdav1d: 23581a4d8ec811ff171ed5e2e05cd27bad64c39f
   libwebp: 02b23773aedb6ff1fd38cec7a77b81414c6842a8
-  MyModule: 0bb0c6c5687672eaf6ca206b40a37b251f261c8b
+  MyModule: f54fe7050229eb1ab422dd4b2fd139dae526da67
   RCTDeprecation: 7487d6dda857ccd4cb3dd6ecfccdc3170e85dcbc
   RCTRequired: 54128b7df8be566881d48c7234724a78cb9b6157
   RCTTypeSafety: d2b07797a79e45d7b19e1cd2f53c79ab419fe217
@@ -2613,6 +2618,6 @@ SPEC CHECKSUMS:
   SDWebImageWebPCoder: e38c0a70396191361d60c092933e22c20d5b1380
   Yoga: 051f086b5ccf465ff2ed38a2cf5a558ae01aaaa1
 
-PODFILE CHECKSUM: 91b396568e0256d93068564e74e3a3715416b7fe
+PODFILE CHECKSUM: 2d70fcf5141bdf2e9aae723adeabe822a2298a11
 
 COCOAPODS: 1.16.2

@@ -7,7 +7,7 @@ public class AppDelegate: ExpoAppDelegate {
   var window: UIWindow?
 
   var reactNativeDelegate: ExpoReactNativeFactoryDelegate?
-  var reactNativeFactory: RCTReactNativeFactory?
+  @objc dynamic var reactNativeFactory: RCTReactNativeFactory?  // Add @objc dynamic here!
 
   public override func application(
     _ application: UIApplication,
