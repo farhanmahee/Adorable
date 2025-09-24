@@ -20,14 +20,14 @@ public class MyModule: Module {
 
     AsyncFunction("loadManifest") { (promise: Promise) in
       ManifestLoader.loadManifest(
-        from: "https://xixns.vm.freestyle.sh",
+        from: "https://fuely.vm.freestyle.sh",
         promise: promise
       )
     }
 
     AsyncFunction("loadAndShowAppFromManifest") { (promise: Promise) in
       // Use the new completion handler method
-      ManifestLoader.loadManifestObject(from: "https://xixns.vm.freestyle.sh") { result in
+      ManifestLoader.loadManifestObject(from: "https://fuely.vm.freestyle.sh") { result in
         switch result {
         case .success(let manifest):
           // Load and show the app with the manifest
