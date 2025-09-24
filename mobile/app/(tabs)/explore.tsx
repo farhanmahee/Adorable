@@ -9,8 +9,16 @@ import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Fonts } from '@/constants/theme';
 import MyModule from '@/modules/my-module';
+import { useEffect, useState } from 'react';
 
 export default function TabTwoScreen() {
+  let [manifest, setManifest] = useState<any>(null);
+  useEffect(() => {
+    MyModule.loadManifest().then((data) => {
+      console.log("MY MANIFEST", data);
+      setManifest(data);
+    });
+  }, []);
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
@@ -35,6 +43,7 @@ export default function TabTwoScreen() {
       <Collapsible title="File-based routing">
         <ThemedText>
           <ThemedText>Test {MyModule.hello()}</ThemedText>
+          <ThemedText>Test 2 {manifest ? JSON.stringify(manifest): "Loading..."}</ThemedText>
 
         </ThemedText>
        

@@ -1,4 +1,5 @@
 PODS:
+  - Alamofire (5.10.2)
   - EXConstants (18.0.9):
     - ExpoModulesCore
   - EXJSONUtils (0.15.0)
@@ -277,6 +278,8 @@ PODS:
   - libwebp/webp (1.5.0):
     - libwebp/sharpyuv
   - MyModule (1.0.0):
+    - Alamofire (~> 5.0)
+    - EXManifests
     - ExpoModulesCore
   - RCTDeprecation (0.81.4)
   - RCTRequired (0.81.4)
@@ -2206,7 +2209,7 @@ PODS:
 DEPENDENCIES:
   - EXConstants (from `../node_modules/expo-constants/ios`)
   - EXJSONUtils (from `../node_modules/expo-json-utils/ios`)
-  - EXManifests (from `../node_modules/expo-manifests/ios`)
+  - EXManifests (from `../../vendor/expo/packages/expo-manifests/ios`)
   - Expo (from `../node_modules/expo`)
   - expo-dev-client (from `../node_modules/expo-dev-client/ios`)
   - expo-dev-launcher (from `../node_modules/expo-dev-launcher`)
@@ -2303,6 +2306,7 @@ DEPENDENCIES:
 
 SPEC REPOS:
   trunk:
+    - Alamofire
     - libavif
     - libdav1d
     - libwebp
@@ -2317,7 +2321,7 @@ EXTERNAL SOURCES:
   EXJSONUtils:
     :path: "../node_modules/expo-json-utils/ios"
   EXManifests:
-    :path: "../node_modules/expo-manifests/ios"
+    :path: "../../vendor/expo/packages/expo-manifests/ios"
   Expo:
     :path: "../node_modules/expo"
   expo-dev-client:
@@ -2505,6 +2509,7 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
 SPEC CHECKSUMS:
+  Alamofire: 7193b3b92c74a07f85569e1a6c4f4237291e7496
   EXConstants: a95804601ee4a6aa7800645f9b070d753b1142b3
   EXJSONUtils: 1d3e4590438c3ee593684186007028a14b3686cd
   EXManifests: 224345a575fca389073c416297b6348163f28d1a
@@ -2532,7 +2537,7 @@ SPEC CHECKSUMS:
   libavif: 84bbb62fb232c3018d6f1bab79beea87e35de7b7
   libdav1d: 23581a4d8ec811ff171ed5e2e05cd27bad64c39f
   libwebp: 02b23773aedb6ff1fd38cec7a77b81414c6842a8
-  MyModule: a9fa64f38f3a2d5ea6be37a28b602a4c939b7bd2
+  MyModule: 0bb0c6c5687672eaf6ca206b40a37b251f261c8b
   RCTDeprecation: 7487d6dda857ccd4cb3dd6ecfccdc3170e85dcbc
   RCTRequired: 54128b7df8be566881d48c7234724a78cb9b6157
   RCTTypeSafety: d2b07797a79e45d7b19e1cd2f53c79ab419fe217
@@ -2608,6 +2613,6 @@ SPEC CHECKSUMS:
   SDWebImageWebPCoder: e38c0a70396191361d60c092933e22c20d5b1380
   Yoga: 051f086b5ccf465ff2ed38a2cf5a558ae01aaaa1
 
-PODFILE CHECKSUM: 291411ff72c4088a27cce57dca33f94c639348d5
+PODFILE CHECKSUM: 91b396568e0256d93068564e74e3a3715416b7fe
 
 COCOAPODS: 1.16.2

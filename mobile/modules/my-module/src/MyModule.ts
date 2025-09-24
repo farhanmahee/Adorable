@@ -6,6 +6,7 @@ declare class MyModule extends NativeModule<MyModuleEvents> {
   PI: number;
   hello(): string;
   setValueAsync(value: string): Promise<void>;
+  loadManifest: () => Promise<any>;
 }
 
 // This call loads the native module object from the JSI.

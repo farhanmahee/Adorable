@@ -1,5 +1,6 @@
 import ExpoModulesCore
-import EXManifest
+import EXManifests
+import Alamofire
 
 public class MyModule: Module {
   // Each module class must implement the definition function. The definition consists of components
@@ -21,7 +22,14 @@ public class MyModule: Module {
 
     // Defines a JavaScript synchronous function that runs the native code on the JavaScript thread.
     Function("hello") {
-      return "Hello from iOS — this is a function and I can go off of this 👋"
+      return "Hello from iOS — this is a function and I can go off of this — confirm update A 👋"
+    }
+
+    AsyncFunction("loadManifest") { (promise: Promise) in
+      ManifestLoader.loadManifest(
+        from: "https://syyxc.vm.freestyle.sh",
+        promise: promise
+      )
     }
 
     // Defines a JavaScript function that always returns a Promise and whose native code
