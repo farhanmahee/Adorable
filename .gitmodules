@@ -1,3 +1,4 @@
 [submodule "vendor/expo"]
 	path = vendor/expo
 	url = https://github.com/freestyle-sh/expo
+	branch = dev-prod-available
