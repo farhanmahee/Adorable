@@ -111,15 +111,6 @@ public class AppLoader: NSObject {
         self.originalRootViewController = rootViewController
       }
       
-      // Clean up any existing external app
-      if let existingFactory = self.externalAppFactory {
-        print("🔄 Cleaning up existing external app...")
-        if let bridge = existingFactory.value(forKey: "bridge") as? NSObject {
-          _ = bridge.perform(NSSelectorFromString("invalidate"))
-        }
-        self.externalAppFactory = nil
-        self.externalAppDelegate = nil
-      }
       
       // Create delegate for external app
       let delegate = ExternalAppDelegate(bundleURL: bundleUrl)
@@ -139,6 +130,10 @@ public class AppLoader: NSObject {
       modalWindow.windowLevel = UIWindow.Level.normal
       self.externalAppWindow = modalWindow
       
+      // IMPORTANT: Make the window key and visible temporarily to ensure React Native starts
+      print("🔑 Making external window key and visible for React Native initialization")
+      modalWindow.makeKeyAndVisible()
+      
       // Start React Native with the external app in the modal window
       factory.startReactNative(
         withModuleName: moduleName,
@@ -146,12 +141,16 @@ public class AppLoader: NSObject {
         launchOptions: nil
       )
       
-      // Get the root view controller from the modal window
-      guard let externalRootVC = modalWindow.rootViewController else {
-        print("⚠️ No root view controller created by factory")
-        promise.reject("NO_EXTERNAL_VC", "Failed to create external app view controller")
-        return
-      }
+      // Give React Native a moment to initialize
+      // DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        // Get the root view controller from the modal window
+        guard let externalRootVC = modalWindow.rootViewController else {
+          print("⚠️ No root view controller created by factory")
+          promise.reject("NO_EXTERNAL_VC", "Failed to create external app view controller")
+          return
+        }
+        
+        print("📱 React Native initialized, transferring to modal")
       
       // Create a modal view controller wrapper
       let modalViewController = UIViewController()
