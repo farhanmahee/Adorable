@@ -18,6 +18,7 @@ public class AppLoader: NSObject {
   private var externalAppWindow: UIWindow?
   private var externalAppFactory: ExpoReactNativeFactory?
   private var externalAppDelegate: ExternalAppDelegate?
+  private var externalAppViewController: UIViewController?
   
   // MARK: - Initialization
   
@@ -34,35 +35,53 @@ public class AppLoader: NSObject {
         return
       }
       
-      // Clean up external app factory
-      if let factory = self.externalAppFactory {
-        print("🔴 Closing external app")
-        // Invalidate the bridge if it exists
-        if let bridge = factory.value(forKey: "bridge") as? NSObject {
-          _ = bridge.perform(NSSelectorFromString("invalidate"))
+      // Dismiss the modal if it exists
+      if let modalVC = self.externalAppViewController {
+        print("🔴 Dismissing external app modal")
+        modalVC.dismiss(animated: true) {
+          // Clean up after dismissal
+          self.cleanupExternalApp()
+          promise.resolve(["success": true, "closed": true])
         }
-        self.externalAppFactory = nil
-      }
-      
-      // Clean up delegate
-      self.externalAppDelegate = nil
-      
-      // Restore the original root view controller
-      if let window = UIApplication.shared.delegate?.window as? UIWindow,
-         let originalVC = self.originalRootViewController {
-        print("🔴 Restoring original app view")
-        window.rootViewController = originalVC
-        window.makeKeyAndVisible()
-        
-        // Clean up external window
-        self.externalAppWindow?.isHidden = true
-        self.externalAppWindow = nil
-        
-        promise.resolve(["success": true, "closed": true])
       } else {
-        promise.reject("NO_ORIGINAL", "No original view to restore")
+        // No modal to dismiss
+        self.cleanupExternalApp()
+        promise.resolve(["success": true, "closed": false, "message": "No modal to close"])
       }
     }
+  }
+  
+  @objc private func closeButtonTapped() {
+    // Dismiss the modal when close button is tapped
+    if let modalVC = self.externalAppViewController {
+      print("🔴 Dismissing external app modal via close button")
+      modalVC.dismiss(animated: true) {
+        // Clean up after dismissal
+        self.cleanupExternalApp()
+      }
+    }
+  }
+  
+  private func cleanupExternalApp() {
+    // Clean up external app factory
+    if let factory = self.externalAppFactory {
+      print("🔴 Cleaning up external app")
+      // Invalidate the bridge if it exists
+      if let bridge = factory.value(forKey: "bridge") as? NSObject {
+        _ = bridge.perform(NSSelectorFromString("invalidate"))
+      }
+      self.externalAppFactory = nil
+    }
+    
+    // Clean up delegate
+    self.externalAppDelegate = nil
+    
+    // Clean up external window
+    self.externalAppWindow?.isHidden = true
+    self.externalAppWindow = nil
+    
+    // Clean up modal reference
+    self.externalAppViewController = nil
   }
   
   public func loadAndShowApp(
@@ -81,15 +100,15 @@ public class AppLoader: NSObject {
     print("🟢 Loading app from: \(bundleUrl.absoluteString)")
     
     DispatchQueue.main.async {
-      // Get the main window
-      guard let mainWindow = UIApplication.shared.delegate?.window as? UIWindow else {
-        promise.reject("NO_WINDOW", "Could not access application window")
+      // Get the current root view controller
+      guard let rootViewController = UIApplication.shared.windows.first?.rootViewController else {
+        promise.reject("NO_ROOT_VC", "Could not access root view controller")
         return
       }
       
       // Store the original root view controller if not already stored
       if self.originalRootViewController == nil {
-        self.originalRootViewController = mainWindow.rootViewController
+        self.originalRootViewController = rootViewController
       }
       
       // Clean up any existing external app
@@ -115,24 +134,45 @@ public class AppLoader: NSObject {
       let moduleName = manifest.slug() ?? "main"
       print("📦 Creating React Native instance for module: \(moduleName)")
       
-      // Create a new window for the external app (or reuse main window)
-      let window = self.externalAppWindow ?? mainWindow
-      self.externalAppWindow = window
+      // Create a new window for the React Native instance
+      let modalWindow = UIWindow(frame: UIScreen.main.bounds)
+      modalWindow.windowLevel = UIWindow.Level.normal
+      self.externalAppWindow = modalWindow
       
-      // Start React Native with the external app
+      // Start React Native with the external app in the modal window
       factory.startReactNative(
         withModuleName: moduleName,
-        in: window,
+        in: modalWindow,
         launchOptions: nil
       )
       
-      // Apply background color if specified
-      if let bgColorHex = manifest.iosOrRootBackgroundColor() {
-        window.backgroundColor = self.hexStringToUIColor(hex: bgColorHex)
+      // Get the root view controller from the modal window
+      guard let externalRootVC = modalWindow.rootViewController else {
+        print("⚠️ No root view controller created by factory")
+        promise.reject("NO_EXTERNAL_VC", "Failed to create external app view controller")
+        return
       }
       
-      // Make sure the window is visible
-      window.makeKeyAndVisible()
+      // Create a modal view controller wrapper
+      let modalViewController = UIViewController()
+      modalViewController.modalPresentationStyle = .fullScreen
+      modalViewController.modalTransitionStyle = .coverVertical
+      
+      // Instead of adding the view controller as a child, just take its view
+      // This avoids the UIViewControllerHierarchyInconsistency error
+      let externalView = externalRootVC.view!
+      modalViewController.view.addSubview(externalView)
+      externalView.frame = modalViewController.view.bounds
+      externalView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+      
+      
+      // Store reference to the modal
+      self.externalAppViewController = modalViewController
+      
+      // Present the modal
+      rootViewController.present(modalViewController, animated: true) {
+        print("✅ External app presented in modal!")
+      }
       
       print("✅ External app loaded successfully!")
       
