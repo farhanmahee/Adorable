@@ -2,21 +2,30 @@ import Foundation
 import Dispatch
 import ExpoModulesCore
 import EXManifests
+import Expo
+import React
+import ReactAppDependencyProvider
 
 /**
- * AppLoader that creates a separate bridge for external apps
- * Maintains isolation between main app and loaded apps
+ * AppLoader that creates a separate React Native instance for external apps
+ * Using ExpoReactNativeFactory for cleaner implementation
  */
 public class AppLoader: NSObject {
   
+  // MARK: - Properties
+  
   private weak var originalRootViewController: UIViewController?
-  private var appRootViewController: UIViewController?
-  private var appBridge: AnyObject? // Will hold the separate RCTBridge for external app
-  private var bundleURL: URL?
+  private var externalAppWindow: UIWindow?
+  private var externalAppFactory: ExpoReactNativeFactory?
+  private var externalAppDelegate: ExternalAppDelegate?
+  
+  // MARK: - Initialization
   
   public override init() {
     super.init()
   }
+  
+  // MARK: - Public Methods
   
   public func closeApp(promise: Promise) {
     DispatchQueue.main.async { [weak self] in
@@ -25,12 +34,18 @@ public class AppLoader: NSObject {
         return
       }
       
-      // Invalidate the external app bridge if it exists
-      if let bridge = self.appBridge {
-        print("🔴 Closing external app and invalidating bridge")
-        _ = bridge.perform(NSSelectorFromString("invalidate"))
-        self.appBridge = nil
+      // Clean up external app factory
+      if let factory = self.externalAppFactory {
+        print("🔴 Closing external app")
+        // Invalidate the bridge if it exists
+        if let bridge = factory.value(forKey: "bridge") as? NSObject {
+          _ = bridge.perform(NSSelectorFromString("invalidate"))
+        }
+        self.externalAppFactory = nil
       }
+      
+      // Clean up delegate
+      self.externalAppDelegate = nil
       
       // Restore the original root view controller
       if let window = UIApplication.shared.delegate?.window as? UIWindow,
@@ -38,7 +53,11 @@ public class AppLoader: NSObject {
         print("🔴 Restoring original app view")
         window.rootViewController = originalVC
         window.makeKeyAndVisible()
-        self.appRootViewController = nil
+        
+        // Clean up external window
+        self.externalAppWindow?.isHidden = true
+        self.externalAppWindow = nil
+        
         promise.resolve(["success": true, "closed": true])
       } else {
         promise.reject("NO_ORIGINAL", "No original view to restore")
@@ -59,100 +78,60 @@ public class AppLoader: NSObject {
       return
     }
     
-    self.bundleURL = bundleUrl
-    
     print("🟢 Loading app from: \(bundleUrl.absoluteString)")
     
-    // Create work item for main thread execution
-    let workItem = DispatchWorkItem {
+    DispatchQueue.main.async {
       // Get the main window
-      guard let window = UIApplication.shared.delegate?.window as? UIWindow else {
+      guard let mainWindow = UIApplication.shared.delegate?.window as? UIWindow else {
         promise.reject("NO_WINDOW", "Could not access application window")
         return
       }
       
       // Store the original root view controller if not already stored
       if self.originalRootViewController == nil {
-        self.originalRootViewController = window.rootViewController
+        self.originalRootViewController = mainWindow.rootViewController
       }
       
-      // Clean up existing external app bridge if any
-      if let existingBridge = self.appBridge {
-        print("🔄 Invalidating existing external app bridge...")
-        _ = existingBridge.perform(NSSelectorFromString("invalidate"))
-        self.appBridge = nil
+      // Clean up any existing external app
+      if let existingFactory = self.externalAppFactory {
+        print("🔄 Cleaning up existing external app...")
+        if let bridge = existingFactory.value(forKey: "bridge") as? NSObject {
+          _ = bridge.perform(NSSelectorFromString("invalidate"))
+        }
+        self.externalAppFactory = nil
+        self.externalAppDelegate = nil
       }
       
-      // Create a new bridge for the external app
-      print("🔨 Creating new bridge for external app...")
+      // Create delegate for external app
+      let delegate = ExternalAppDelegate(bundleURL: bundleUrl)
+      delegate.dependencyProvider = RCTAppDependencyProvider()
+      self.externalAppDelegate = delegate
       
-      // We need to create the bridge using runtime methods since we can't import React directly
-      guard let bridgeClass = NSClassFromString("RCTBridge") else {
-        promise.reject("NO_BRIDGE_CLASS", "RCTBridge class not found")
-        return
-      }
+      // Create factory for external app
+      let factory = ExpoReactNativeFactory(delegate: delegate)
+      self.externalAppFactory = factory
       
-      // Use the Objective-C runtime to allocate and initialize the bridge
-      // First, get the alloc method
-      let allocMethod = class_getClassMethod(bridgeClass as? AnyClass, NSSelectorFromString("alloc"))
-      let allocIMP = method_getImplementation(allocMethod!)
-      typealias AllocFunc = @convention(c) (AnyClass, Selector) -> AnyObject
-      let allocFunc = unsafeBitCast(allocIMP, to: AllocFunc.self)
-      let allocatedBridge = allocFunc(bridgeClass as! AnyClass, NSSelectorFromString("alloc"))
-      
-      // Now initialize with delegate
-      let initSelector = NSSelectorFromString("initWithDelegate:launchOptions:")
-      let _ = (allocatedBridge as! NSObject).perform(initSelector, with: self, with: nil)
-      
-      // Store the initialized bridge
-      self.appBridge = allocatedBridge as? NSObject
-      
-      // Get RCTRootView class
-      guard let rootViewClass = NSClassFromString("RCTRootView") else {
-        promise.reject("NO_ROOTVIEW_CLASS", "RCTRootView class not found")
-        return
-      }
-      
-      // Create root view
+      // Get the module name from manifest
       let moduleName = manifest.slug() ?? "main"
-      print("📦 Creating root view for module: \(moduleName)")
+      print("📦 Creating React Native instance for module: \(moduleName)")
       
-      // Use the Objective-C runtime to allocate RCTRootView
-      let rootViewAllocMethod = class_getClassMethod(rootViewClass as? AnyClass, NSSelectorFromString("alloc"))
-      let rootViewAllocIMP = method_getImplementation(rootViewAllocMethod!)
-      typealias RootViewAllocFunc = @convention(c) (AnyClass, Selector) -> AnyObject
-      let rootViewAllocFunc = unsafeBitCast(rootViewAllocIMP, to: RootViewAllocFunc.self)
-      let allocatedRootView = rootViewAllocFunc(rootViewClass as! AnyClass, NSSelectorFromString("alloc")) as! NSObject
+      // Create a new window for the external app (or reuse main window)
+      let window = self.externalAppWindow ?? mainWindow
+      self.externalAppWindow = window
       
-      // Initialize RCTRootView with bridge, module name, and initial properties
-      let rootViewInitSelector = NSSelectorFromString("initWithBridge:moduleName:initialProperties:")
-      let initialProperties = ["manifestUrl": manifest.bundleUrl()] as NSDictionary
-      
-      // Use Objective-C runtime to call the 3-parameter initializer
-      typealias RootViewInitFunc = @convention(c) (NSObject, Selector, AnyObject?, NSString?, NSDictionary?) -> NSObject
-      let rootViewMethod = allocatedRootView.method(for: rootViewInitSelector)
-      let rootViewInitFunc = unsafeBitCast(rootViewMethod, to: RootViewInitFunc.self)
-      let _ = rootViewInitFunc(allocatedRootView, rootViewInitSelector, self.appBridge, moduleName as NSString, initialProperties)
-      
-      // Cast to UIView for use
-      guard let rootView = allocatedRootView as? UIView else {
-        promise.reject("ROOTVIEW_CAST_FAILED", "Failed to cast RCTRootView to UIView")
-        return
-      }
+      // Start React Native with the external app
+      factory.startReactNative(
+        withModuleName: moduleName,
+        in: window,
+        launchOptions: nil
+      )
       
       // Apply background color if specified
       if let bgColorHex = manifest.iosOrRootBackgroundColor() {
-        rootView.backgroundColor = self.hexStringToUIColor(hex: bgColorHex)
-        window.backgroundColor = rootView.backgroundColor
+        window.backgroundColor = self.hexStringToUIColor(hex: bgColorHex)
       }
       
-      // Create root view controller
-      let rootViewController = UIViewController()
-      rootViewController.view = rootView
-      self.appRootViewController = rootViewController
-      
-      // Set as window's root
-      window.rootViewController = rootViewController
+      // Make sure the window is visible
       window.makeKeyAndVisible()
       
       print("✅ External app loaded successfully!")
@@ -164,10 +143,9 @@ public class AppLoader: NSObject {
         "slug": manifest.slug() as Any
       ])
     }
-    
-    // Execute work item on main queue
-    DispatchQueue.main.async(execute: workItem)
   }
+  
+  // MARK: - Private Helpers
   
   private func hexStringToUIColor(hex: String?) -> UIColor? {
     guard let hex = hex else { return nil }
@@ -186,75 +164,23 @@ public class AppLoader: NSObject {
   }
 }
 
-// MARK: - Dynamic Bridge Delegate Methods
-extension AppLoader {
+// MARK: - External App Delegate
+
+class ExternalAppDelegate: ExpoReactNativeFactoryDelegate {
+  private let externalBundleURL: URL
   
-  // This will be called by RCTBridge via runtime
-  @objc(sourceURLForBridge:)
-  public func sourceURL(for bridge: AnyObject) -> URL? {
-    print("🔗 Bridge requesting source URL: \(self.bundleURL?.absoluteString ?? "nil")")
-    return self.bundleURL
+  init(bundleURL: URL) {
+    self.externalBundleURL = bundleURL
+    super.init()
   }
   
-  // This will be called by RCTBridge via runtime for extra modules
-  @objc(extraModulesForBridge:)
-  public func extraModules(for bridge: AnyObject) -> [Any] {
-    print("📦 Providing extra modules for bridge...")
-    
-    var modules: [Any] = []
-    
-    // 1. Add Expo modules using the generated ExpoModulesProvider
-    if let expoModulesProviderClass = NSClassFromString("ExpoModulesProvider") as? NSObject.Type {
-      let provider = expoModulesProviderClass.init()
-      let selector = NSSelectorFromString("getModulesForBridge:")
-      if provider.responds(to: selector),
-         let result = provider.perform(selector, with: bridge),
-         let expoModules = result.takeUnretainedValue() as? [Any] {
-        print("   ✓ Added \(expoModules.count) Expo modules")
-        modules.append(contentsOf: expoModules)
-      }
-    }
-    
-    // 2. Add essential React Native modules
-    let essentialModuleClasses = [
-      "RCTAsyncLocalStorage",
-      "RCTNetworking",
-      "RCTImageLoader",
-      "RCTUIManager",
-      "RCTEventDispatcher"
-    ]
-    
-    for className in essentialModuleClasses {
-      if let moduleClass = NSClassFromString(className) as? NSObject.Type {
-        let module = moduleClass.init()
-        modules.append(module)
-        print("   ✓ Added essential module: \(className)")
-      }
-    }
-    
-    // 3. Add dev support modules in debug builds
-    #if DEBUG
-    let devModuleClasses = ["RCTDevMenu", "RCTDevSettings"]
-    
-    for className in devModuleClasses {
-      if let moduleClass = NSClassFromString(className) as? NSObject.Type {
-        let module = moduleClass.init()
-        modules.append(module)
-        print("   ✓ Added dev module: \(className)")
-      }
-    }
-    #endif
-    
-    print("📦 Total modules provided: \(modules.count)")
-    return modules
+  override func sourceURL(for bridge: RCTBridge) -> URL? {
+    print("🔗 Providing bundle URL for external app: \(externalBundleURL.absoluteString)")
+    return externalBundleURL
   }
   
-  // Optional: Handle missing modules
-  @objc(bridge:didNotFindModule:)
-  public func bridge(_ bridge: AnyObject, didNotFindModule moduleName: String) -> Bool {
-    print("⚠️ Bridge could not find module: \(moduleName)")
-    // Return false to use default behavior
-    return false
+  override func bundleURL() -> URL? {
+    return externalBundleURL
   }
 }
 
