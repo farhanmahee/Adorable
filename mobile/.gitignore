@@ -43,7 +43,6 @@ app-example
 
 # ios folder has been changed
 ios/
-# or: ios/**
 
 # unignore the dir, then the files
 !ios/

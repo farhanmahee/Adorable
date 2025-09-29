@@ -8,17 +8,8 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Fonts } from '@/constants/theme';
-import MyModule from '@/modules/my-module';
-import { useEffect, useState } from 'react';
 
 export default function TabTwoScreen() {
-  let [manifest, setManifest] = useState<any>(null);
-  useEffect(() => {
-    MyModule.loadManifest().then((data) => {
-      console.log("MY MANIFEST", data);
-      setManifest(data);
-    });
-  }, []);
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
@@ -42,11 +33,14 @@ export default function TabTwoScreen() {
       <ThemedText>This app includes example code to help you get started.</ThemedText>
       <Collapsible title="File-based routing">
         <ThemedText>
-          <ThemedText>Test {MyModule.hello()}</ThemedText>
-          <ThemedText>Test 2 {manifest ? JSON.stringify(manifest): "Loading..."}</ThemedText>
-
+          This app has two screens:{' '}
+          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
+          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
         </ThemedText>
-       
+        <ThemedText>
+          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
+          sets up the tab navigator.
+        </ThemedText>
         <ExternalLink href="https://docs.expo.dev/router/introduction">
           <ThemedText type="link">Learn more</ThemedText>
         </ExternalLink>
