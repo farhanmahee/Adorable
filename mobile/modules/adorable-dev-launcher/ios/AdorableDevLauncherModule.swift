@@ -1,4 +1,5 @@
 import ExpoModulesCore
+import UIKit
 
 public class AdorableDevLauncherModule: Module {
   // Each module class must implement the definition function. The definition consists of components
@@ -30,6 +31,31 @@ public class AdorableDevLauncherModule: Module {
       self.sendEvent("onChange", [
         "value": value
       ])
+    }
+
+    // Load a React Native app from a bundle URL in a modal
+    AsyncFunction("loadAppFromBundleUrl") { (urlString: String) in
+      guard let url = URL(string: urlString) else {
+        throw Exception(name: "InvalidURL", description: "The provided URL string is invalid")
+      }
+
+      DispatchQueue.main.async {
+        let reactViewController = ReactBundleViewController(bundleURL: url)
+
+        // Get the root view controller to present from
+        guard let rootViewController = UIApplication.shared.windows.first?.rootViewController else {
+          return
+        }
+
+        // Find the topmost presented view controller
+        var topController = rootViewController
+        while let presented = topController.presentedViewController {
+          topController = presented
+        }
+
+        // Present the React Native view modally
+        topController.present(reactViewController, animated: true)
+      }
     }
 
     // Enables the module to be used as a native view. Definition components that are accepted as part of the

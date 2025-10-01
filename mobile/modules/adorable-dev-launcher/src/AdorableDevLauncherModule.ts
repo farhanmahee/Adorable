@@ -6,6 +6,7 @@ declare class AdorableDevLauncherModule extends NativeModule<AdorableDevLauncher
   PI: number;
   hello(): string;
   setValueAsync(value: string): Promise<void>;
+  loadAppFromBundleUrl(url: string): Promise<void>;
 }
 
 // This call loads the native module object from the JSI.
