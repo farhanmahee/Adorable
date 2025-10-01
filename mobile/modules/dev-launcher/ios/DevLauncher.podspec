@@ -3,14 +3,14 @@ Pod::Spec.new do |s|
   s.version        = '1.0.0'
   s.summary        = 'Dev Launcher for loading React Native apps from bundle URLs'
   s.description    = 'A module for loading React Native applications from dynamic bundle URLs in a modal'
-  s.author         = ''
+  s.author         = '@theswerd'
   s.homepage       = 'https://docs.expo.dev/modules/'
   s.platforms      = {
     :ios => '15.1',
     :tvos => '15.1'
   }
   s.swift_version  = '5.2'
-  s.source         = { git: '' }
+  s.source         = { git: 'https://github.com/freestyle-sh/adorable' }
   s.static_framework = true
 
   s.source_files = "**/*.{h,m,mm,swift,hpp,cpp}"
