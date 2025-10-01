@@ -23,7 +23,7 @@ class ReactBundleViewController: UIViewController {
     reactNativeFactoryDelegate = ReactBundleDelegate(bundleURL: bundleURL)
     reactNativeFactoryDelegate!.dependencyProvider = RCTAppDependencyProvider()
     reactNativeFactory = RCTReactNativeFactory(delegate: reactNativeFactoryDelegate!)
-    view = reactNativeFactory!.rootViewFactory.view(withModuleName: "HelloWorld")
+    view = reactNativeFactory!.rootViewFactory.view(withModuleName: "main")
   }
 }
 

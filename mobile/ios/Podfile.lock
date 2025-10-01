@@ -1,15 +1,11 @@
 PODS:
-  - AdorableDevLauncher (1.0.0):
-    - EXManifests
-    - expo-dev-menu
-    - expo-dev-menu-interface
+  - Bruhv (1.0.0):
     - ExpoModulesCore
-    - EXUpdatesInterface
+  - DevLauncher (1.0.0):
+    - ExpoModulesCore
     - React-Core
     - React-RCTAppDelegate
     - ReactAppDependencyProvider
-  - Bruhv (1.0.0):
-    - ExpoModulesCore
   - EXConstants (18.0.9):
     - ExpoModulesCore
   - EXManifests (1.0.8):
@@ -2114,8 +2110,8 @@ PODS:
   - Yoga (0.0.0)
 
 DEPENDENCIES:
-  - AdorableDevLauncher (from `../modules/adorable-dev-launcher/ios`)
   - Bruhv (from `../modules/bruhv/ios`)
+  - DevLauncher (from `../modules/dev-launcher/ios`)
   - EXConstants (from `../node_modules/expo-constants/ios`)
   - EXManifests (from `../../vendor/expo/packages/expo-manifests/ios`)
   - Expo (from `../node_modules/expo`)
@@ -2220,10 +2216,10 @@ SPEC REPOS:
     - SDWebImageWebPCoder
 
 EXTERNAL SOURCES:
-  AdorableDevLauncher:
-    :path: "../modules/adorable-dev-launcher/ios"
   Bruhv:
     :path: "../modules/bruhv/ios"
+  DevLauncher:
+    :path: "../modules/dev-launcher/ios"
   EXConstants:
     :path: "../node_modules/expo-constants/ios"
   EXManifests:
@@ -2409,8 +2405,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
 SPEC CHECKSUMS:
-  AdorableDevLauncher: eebf48144e1c27f24389f12456951e8a61f0dac1
   Bruhv: e3dea956489608e09f0793612b911a9c29b569e8
+  DevLauncher: 962e2e87b0a4df4b71b1dc79832fc3d08891bb44
   EXConstants: a95804601ee4a6aa7800645f9b070d753b1142b3
   EXManifests: 224345a575fca389073c416297b6348163f28d1a
   Expo: c839a13691635386c0134f204dbbaed3cebff0a8
