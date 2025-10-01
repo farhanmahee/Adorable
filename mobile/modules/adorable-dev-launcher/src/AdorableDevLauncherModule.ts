@@ -6,6 +6,10 @@ declare class AdorableDevLauncherModule extends NativeModule<AdorableDevLauncher
   PI: number;
   hello(): string;
   setValueAsync(value: string): Promise<void>;
+
+
+  // New: load from an explicit Metro bundle URL (preserves host/path)
+  loadAppWithURL(url: string): Promise<void>;
 }
 
 // This call loads the native module object from the JSI.

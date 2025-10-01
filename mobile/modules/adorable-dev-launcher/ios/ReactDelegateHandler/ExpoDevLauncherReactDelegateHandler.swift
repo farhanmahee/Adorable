@@ -2,10 +2,12 @@
 
 import ExpoModulesCore
 import EXUpdatesInterface
+import React
+import AdorableDevLauncher
 
 @objc
 public class ExpoDevLauncherReactDelegateHandler: ExpoReactDelegateHandler, AdorableDevLauncherControllerDelegate {
-  private weak var reactNativeFactory: RCTReactNativeFactory?
+  private var reactNativeFactory: AdorableDevLauncherReactNativeFactory?
   private weak var reactDelegate: ExpoReactDelegate?
   private var launchOptions: [AnyHashable: Any]?
   private var deferredRootView: AdorableDevLauncherDeferredRCTRootView?
@@ -22,8 +24,10 @@ public class ExpoDevLauncherReactDelegateHandler: ExpoReactDelegateHandler, Ador
       return nil
     }
 
+    print("[AdorableDevLauncher][Handler] createReactRootView called for module \(moduleName)")
     self.reactDelegate = reactDelegate
     self.launchOptions = launchOptions
+    print("[AdorableDevLauncher][Handler] Calling autoSetupPrepare")
     AdorableDevLauncherController.sharedInstance().autoSetupPrepare(self, launchOptions: launchOptions)
     if let sharedController = UpdatesControllerRegistry.sharedInstance.controller {
       // for some reason the swift compiler and bridge are having issues here
@@ -50,11 +54,13 @@ public class ExpoDevLauncherReactDelegateHandler: ExpoReactDelegateHandler, Ador
   // MARK: EXDevelopmentClientControllerDelegate implementations
 
   public func devLauncherController(_ developmentClientController: AdorableDevLauncherController, didStartWithSuccess success: Bool) {
+    print("[AdorableDevLauncher][Handler] didStartWithSuccess=\(success)")
     guard let reactDelegate = self.reactDelegate else {
       fatalError("`reactDelegate` should not be nil")
     }
 
-    self.reactNativeFactory = reactDelegate.reactNativeFactory as? RCTReactNativeFactory
+    // Instantiate our own factory (compat layer), since ExpoReactDelegate no longer exposes it
+    self.reactNativeFactory = AdorableDevLauncherReactNativeFactory()
 
     // Reset rctAppDelegate so we can relaunch the app
     if RCTIsNewArchEnabled() {
@@ -64,8 +70,17 @@ public class ExpoDevLauncherReactDelegateHandler: ExpoReactDelegateHandler, Ador
       self.reactNativeFactory?.rootViewFactory.bridge = nil
     }
 
-    let rootView = reactDelegate.reactNativeFactory.recreateRootView(
-      withBundleURL: developmentClientController.sourceUrl(),
+    guard let factory = self.reactNativeFactory else {
+      fatalError("`reactNativeFactory` should not be nil")
+    }
+
+    guard let bundleURL = developmentClientController.sourceUrl() else {
+      fatalError("Expected non-nil source URL from AdorableDevLauncherController")
+    }
+    print("[AdorableDevLauncher][Handler] Using bundleURL: \(bundleURL)")
+
+    let rootView = factory.recreateRootView(
+      withBundleURL: bundleURL,
       moduleName: self.rootViewModuleName,
       initialProps: self.rootViewInitialProperties,
       launchOptions: developmentClientController.getLaunchOptions()
@@ -79,9 +94,17 @@ public class ExpoDevLauncherReactDelegateHandler: ExpoReactDelegateHandler, Ador
     guard let rootViewController = self.reactDelegate?.createRootViewController() else {
       fatalError("Invalid rootViewController returned from ExpoReactDelegate")
     }
-    rootViewController.view = rootView
-    window.rootViewController = rootViewController
-    window.makeKeyAndVisible()
+    // Ensure UI work happens on the main thread and the view fills the window
+    DispatchQueue.main.async {
+      rootView.frame = window.bounds
+      rootView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+      print("[AdorableDevLauncher][Handler] Mounting root view for module \(self.rootViewModuleName ?? "<nil>") on main thread")
+      // Use controller helper to properly mount the React root view (handles Fabric/new arch nuances)
+      AdorableDevLauncherController.sharedInstance().setRootView(rootView, toRootViewController: rootViewController)
+      window.rootViewController = rootViewController
+      window.makeKeyAndVisible()
+      print("[AdorableDevLauncher][Handler] Root view set via controller helper and window made key and visible")
+    }
 
     // it is purposeful that we don't clean up saved properties here, because we may initialize
     // several React instances over a single app lifetime and we want them all to have the same

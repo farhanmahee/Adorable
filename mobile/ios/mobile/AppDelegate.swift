@@ -27,6 +27,8 @@ public class AppDelegate: ExpoAppDelegate {
       withModuleName: "main",
       in: window,
       launchOptions: launchOptions)
+
+
 #endif
 
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)

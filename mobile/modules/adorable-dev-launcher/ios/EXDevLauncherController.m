@@ -599,6 +599,7 @@
 
     [self _addInitModuleObserver];
 
+    NSLog(@"[AdorableDevLauncher][Controller] will call delegate didStartWithSuccess");
     [self.delegate devLauncherController:self didStartWithSuccess:YES];
 
     [self setDevMenuAppBridge];
@@ -837,7 +838,13 @@
 
 - (void)setRootView:(UIView *)rootView toRootViewController:(UIViewController *)rootViewController
 {
-  rootViewController.view = rootView;
+  dispatch_async(dispatch_get_main_queue(), ^{
+    NSLog(@"[AdorableDevLauncher][Controller] setRootView called. Attaching to %@ with bounds=%@", rootViewController, NSStringFromCGRect(self.window ? self.window.bounds : UIScreen.mainScreen.bounds));
+    CGRect bounds = self.window ? self.window.bounds : UIScreen.mainScreen.bounds;
+    rootView.frame = bounds;
+    rootView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    rootViewController.view = rootView;
+  });
 }
 
 @end

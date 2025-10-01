@@ -1,7 +1,8 @@
 // Copyright 2015-present 650 Industries. All rights reserved.
 
 /**
- * This file is compiled without ARC - the memory needs to be managed by hand.
+ * ARC compatibility: This file can compile with or without ARC.
+ * Memory-management calls are conditionally compiled.
  */
 
 #import <AdorableDevLauncher/RCTPackagerConnection+EXDevLauncherPackagerConnectionInterceptor.h>
@@ -29,8 +30,13 @@ static RCTReconnectingWebSocket *createSocketForURL(NSURL * url)
   });
 
   RCTReconnectingWebSocket *webSocket = [[RCTReconnectingWebSocket alloc] initWithURL:components.URL queue:queue];
+
+#if !__has_feature(objc_arc)
   [components release];
-  return [webSocket autorelease]; // adds to ARC
+  return [webSocket autorelease];
+#else
+  return webSocket;
+#endif
 }
 
 @implementation RCTPackagerConnection (AdorableDevLauncherPackagerConnectionInterceptor)
@@ -43,7 +49,7 @@ static RCTReconnectingWebSocket *createSocketForURL(NSURL * url)
   // Mutex isn't an objective-c object - [self valueForKey:@"_mutex"] will fail.
   // The other solution requires `object_getInstanceVariable` which doesn't work with ARC.
   // That's the only solution to get private variables that comes from cpp.
-  Ivar mutexVar = object_getInstanceVariable(self, "_mutex", NULL);
+  Ivar mutexVar = class_getInstanceVariable([self class], "_mutex");
   ptrdiff_t mutexOffset = ivar_getOffset(mutexVar);
   unsigned char* selfPtr = (unsigned char *)(__bridge void*)self;
   std::mutex *mutex = (std::mutex *)(selfPtr + mutexOffset);

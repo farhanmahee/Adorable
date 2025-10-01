@@ -1,4 +1,6 @@
 import ExpoModulesCore
+import AdorableDevLauncher
+import React
 
 public class AdorableDevLauncherModule: Module {
   // Each module class must implement the definition function. The definition consists of components
@@ -10,39 +12,60 @@ public class AdorableDevLauncherModule: Module {
     // The module will be accessible from `requireNativeModule('AdorableDevLauncher')` in JavaScript.
     Name("AdorableDevLauncher")
 
-    // Defines constant property on the module.
-    Constant("PI") {
-      Double.pi
-    }
-
     // Defines event names that the module can send to JavaScript.
     Events("onChange")
 
-    // Defines a JavaScript synchronous function that runs the native code on the JavaScript thread.
-    Function("hello") {
-      return "Hello worl👋"
-    }
 
-    // Defines a JavaScript function that always returns a Promise and whose native code
-    // is by default dispatched on the different thread than the JavaScript runtime runs on.
-    AsyncFunction("setValueAsync") { (value: String) in
-      // Send an event to JavaScript.
-      self.sendEvent("onChange", [
-        "value": value
-      ])
-    }
 
-    // Enables the module to be used as a native view. Definition components that are accepted as part of the
-    // view definition: Prop, Events.
-    View(AdorableDevLauncherView.self) {
-      // Defines a setter for the `url` prop.
-      Prop("url") { (view: AdorableDevLauncherView, url: URL) in
-        if view.webView.url != url {
-          view.webView.load(URLRequest(url: url))
-        }
+   
+    // Loads the app from an explicit Metro bundle URL (preserves host/path)
+    AsyncFunction("loadAppWithURL") { (urlString: String, promise: Promise) in
+      print("[AdorableDevLauncher] loadAppWithURL() invoked with \(urlString)")
+      guard let url = URL(string: urlString) else {
+        self.sendEvent("onChange", [
+          "event": "loadAppInvalidUrl",
+          "url": urlString
+        ])
+        promise.reject("ERR_DEV_LAUNCHER_INVALID_URL", "Invalid URL: \(urlString)")
+        return
       }
 
-      Events("onLoad")
+      self.sendEvent("onChange", [
+        "event": "loadAppCalled",
+        "url": url.absoluteString
+      ])
+      let controller = AdorableDevLauncherController.sharedInstance()
+      print("Controller instance: \(controller!)")
+      controller.loadApp(url, onSuccess: {
+        let resolved = controller.sourceUrl()
+        if let resolved = resolved {
+          print("[AdorableDevLauncher] controller sourceUrl: \(resolved)")
+          self.sendEvent("onChange", [
+            "event": "loadAppResolvedSource",
+            "url": resolved.absoluteString
+          ])
+        } else {
+          print("[AdorableDevLauncher] controller sourceUrl is nil")
+        }
+        print("[AdorableDevLauncher] loadAppWithURL success")
+        self.sendEvent("onChange", [
+          "event": "loadAppSuccess",
+          "url": url.absoluteString
+        ])
+        promise.resolve(nil)
+      }, onError: { error in
+        let nsError = error as NSError
+        print("[AdorableDevLauncher] loadAppWithURL error: \(nsError.localizedDescription) domain=\(nsError.domain) code=\(nsError.code)")
+        self.sendEvent("onChange", [
+          "event": "loadAppError",
+          "message": nsError.localizedDescription,
+          "domain": nsError.domain,
+          "code": nsError.code
+        ])
+        promise.reject("ERR_DEV_LAUNCHER_LOAD", nsError.localizedDescription)
+      })
     }
+
+
   }
 }

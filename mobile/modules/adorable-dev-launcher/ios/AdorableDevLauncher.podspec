@@ -12,20 +12,25 @@ Pod::Spec.new do |s|
   s.swift_version  = '5.2'
   s.source         = { git: '' }
   s.static_framework = true
-  
+
+  # Sources
   s.source_files = "**/*.{h,m,mm,swift,hpp,cpp}"
   s.exclude_files = 'ios/Tests/**/*'
-  
+
+  # Expose umbrella header and map headers under AdorableDevLauncher/
+  s.public_header_files = 'AdorableDevLauncher.h', '**/*.h'
+  s.header_dir = 'AdorableDevLauncher'
+
   # Dependencies
   s.dependency 'ExpoModulesCore'
-  s.dependency "React-Core"
+  s.dependency 'React-Core'
   s.dependency 'React-RCTAppDelegate'
-  s.dependency "expo-dev-menu-interface"
-  s.dependency "EXManifests"
-  s.dependency "EXUpdatesInterface"
-  s.dependency "expo-dev-menu"
-  s.dependency "ReactAppDependencyProvider"
-  
+  s.dependency 'expo-dev-menu-interface'
+  s.dependency 'EXManifests'
+  s.dependency 'EXUpdatesInterface'
+  s.dependency 'expo-dev-menu'
+  s.dependency 'ReactAppDependencyProvider'
+
   # Header search paths for Swift compatibility headers
   header_search_paths = [
     '"$(PODS_ROOT)/Headers/Private/React-Core"',
@@ -33,7 +38,7 @@ Pod::Spec.new do |s|
     '"$(PODS_CONFIGURATION_BUILD_DIR)/EXManifests/Swift Compatibility Header"',
     '"$(PODS_CONFIGURATION_BUILD_DIR)/EXUpdatesInterface/Swift Compatibility Header"',
   ]
-  
+
   # If using frameworks (check your Podfile for use_frameworks!)
   if ENV['USE_FRAMEWORKS']
     header_search_paths.concat([
@@ -49,7 +54,7 @@ Pod::Spec.new do |s|
       '"${PODS_CONFIGURATION_BUILD_DIR}/React-performancetimeline/React_performancetimeline.framework/Headers"',
     ])
   end
-  
+
   # Swift/Objective-C compatibility
   s.pod_target_xcconfig = {
     'DEFINES_MODULE' => 'YES',
@@ -57,7 +62,7 @@ Pod::Spec.new do |s|
     'HEADER_SEARCH_PATHS' => header_search_paths.join(' '),
     'FRAMEWORK_SEARCH_PATHS' => '"${PODS_CONFIGURATION_BUILD_DIR}/RNReanimated"',
   }
-  
+
   # User target configuration for Swift compatibility
   s.user_target_xcconfig = {
     'HEADER_SEARCH_PATHS' => '"${PODS_CONFIGURATION_BUILD_DIR}/AdorableDevLauncher/Swift Compatibility Header"',
