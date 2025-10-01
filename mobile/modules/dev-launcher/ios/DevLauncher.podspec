@@ -1,8 +1,8 @@
 Pod::Spec.new do |s|
-  s.name           = 'AdorableDevLauncher'
+  s.name           = 'DevLauncher'
   s.version        = '1.0.0'
-  s.summary        = 'A sample project summary'
-  s.description    = 'A sample project description'
+  s.summary        = 'Dev Launcher for loading React Native apps from bundle URLs'
+  s.description    = 'A module for loading React Native applications from dynamic bundle URLs in a modal'
   s.author         = ''
   s.homepage       = 'https://docs.expo.dev/modules/'
   s.platforms      = {
@@ -12,28 +12,20 @@ Pod::Spec.new do |s|
   s.swift_version  = '5.2'
   s.source         = { git: '' }
   s.static_framework = true
-  
+
   s.source_files = "**/*.{h,m,mm,swift,hpp,cpp}"
-  s.exclude_files = 'ios/Tests/**/*'
-  
+
   # Dependencies
   s.dependency 'ExpoModulesCore'
-  s.dependency "React-Core"
+  s.dependency 'React-Core'
   s.dependency 'React-RCTAppDelegate'
-  s.dependency "expo-dev-menu-interface"
-  s.dependency "EXManifests"
-  s.dependency "EXUpdatesInterface"
-  s.dependency "expo-dev-menu"
-  s.dependency "ReactAppDependencyProvider"
-  
+  s.dependency 'ReactAppDependencyProvider'
+
   # Header search paths for Swift compatibility headers
   header_search_paths = [
     '"$(PODS_ROOT)/Headers/Private/React-Core"',
-    '"${PODS_ROOT}/Headers/Public/RNReanimated"',
-    '"$(PODS_CONFIGURATION_BUILD_DIR)/EXManifests/Swift Compatibility Header"',
-    '"$(PODS_CONFIGURATION_BUILD_DIR)/EXUpdatesInterface/Swift Compatibility Header"',
   ]
-  
+
   # If using frameworks (check your Podfile for use_frameworks!)
   if ENV['USE_FRAMEWORKS']
     header_search_paths.concat([
@@ -49,17 +41,16 @@ Pod::Spec.new do |s|
       '"${PODS_CONFIGURATION_BUILD_DIR}/React-performancetimeline/React_performancetimeline.framework/Headers"',
     ])
   end
-  
+
   # Swift/Objective-C compatibility
   s.pod_target_xcconfig = {
     'DEFINES_MODULE' => 'YES',
     'CLANG_CXX_LANGUAGE_STANDARD' => 'c++20',
     'HEADER_SEARCH_PATHS' => header_search_paths.join(' '),
-    'FRAMEWORK_SEARCH_PATHS' => '"${PODS_CONFIGURATION_BUILD_DIR}/RNReanimated"',
   }
-  
+
   # User target configuration for Swift compatibility
   s.user_target_xcconfig = {
-    'HEADER_SEARCH_PATHS' => '"${PODS_CONFIGURATION_BUILD_DIR}/AdorableDevLauncher/Swift Compatibility Header"',
+    'HEADER_SEARCH_PATHS' => '"${PODS_CONFIGURATION_BUILD_DIR}/DevLauncher/Swift Compatibility Header"',
   }
 end
