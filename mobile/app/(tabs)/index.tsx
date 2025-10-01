@@ -1,30 +1,17 @@
 import * as React from 'react';
 import { Image } from 'expo-image';
-import { Button, Platform, StyleSheet } from 'react-native';
+import { Button, StyleSheet } from 'react-native';
 
-import { HelloWave } from '@/components/hello-wave';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
 import DevLauncherModule from '@/modules/dev-launcher/src/DevLauncherModule';
 
 export default function HomeScreen() {
-  const DevLauncher = requireNativeModule('AdorableDevLauncher');
-  console.log('[AdorableDevLauncher][JS] module created:', !!DevLauncher);
 
-  // JS event listener to surface native events
-  React.useEffect(() => {
-    const emitter = new EventEmitter(DevLauncher);
-    const sub = emitter.addListener('onChange', (event: any) => {
-      console.log('[AdorableDevLauncher][JS event]', event);
-    });
-    return () => sub.remove();
-  }, [DevLauncher]);
 
   return (
     <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
+      headerBackgroundColor={{ light: '#FDBB00', dark: '#1D3D47' }}
       headerImage={
         <Image
           source={require('@/assets/images/partial-react-logo.png')}
@@ -37,22 +24,7 @@ export default function HomeScreen() {
          await DevLauncherModule.loadAppFromBundleUrl("https://nnyue.vm.freestyle.sh/node_modules/expo-router/entry.bundle?platform=ios&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable")
         }} />
       </ThemedView>
-  <ThemedView style={styles.stepContainer}>
-    <ThemedText type="subtitle">Load App</ThemedText>
-    
-    <ThemedView style={{ marginTop: 12 }}>
-      <Button
-        title="Load Remote App"
-        onPress={() => {
-          const remoteUrl = 'https://nnyue.vm.freestyle.sh/node_modules/expo-router/entry.bundle?platform=ios&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable';
-          console.log('[AdorableDevLauncher][JS] Load Remote App pressed with URL:', remoteUrl);
-          DevLauncher.loadAppWithURL(remoteUrl)
-            .then(() => console.log('[AdorableDevLauncher][JS] loadAppWithURL resolved'))
-            .catch((e: any) => console.warn('[AdorableDevLauncher][JS] loadAppWithURL failed', e));
-        }}
-      />
-    </ThemedView>
-  </ThemedView>
+  
 </ParallaxScrollView>
   );
 }
