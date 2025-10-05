@@ -1,5 +1,3 @@
-// BundleLoadingView.swift
-// Minimal SwiftUI overlay shown during RN app load with optional percent.
 
 import SwiftUI
 
@@ -14,38 +12,32 @@ public struct BundleLoadingView: View {
   }
 
   public var body: some View {
-    ZStack(alignment: .top) {
-      // Faint scrim so the overlay is visible even on white backgrounds
-      Color.black.opacity(0.15).ignoresSafeArea()
-
-      VStack(spacing: 10) {
-        if let p = progress {
-          // Determinate linear bar with percent text
-          ProgressView(value: p)
-            .progressViewStyle(.linear)
-            .tint(.white)
-            .frame(maxWidth: .infinity)
-          Text("\(statusText) \(Int(p * 100))%")
-            .foregroundColor(.white)
-            .font(.system(size: 14, weight: .semibold))
-        } else {
-          // Indeterminate spinner
-          ProgressView()
-            .progressViewStyle(CircularProgressViewStyle(tint: .white))
-            .scaleEffect(0.9)
-          Text(statusText)
-            .foregroundColor(.white)
-            .font(.system(size: 14, weight: .semibold))
+    VStack(spacing: 16) {
+      if let p = progress {
+        // Determinate gauge
+        Gauge(value: p) {
+          Text("")
+        } currentValueLabel: {
+          Text("\(Int(p * 100))%")
+            .foregroundColor(.primary)
+            .font(.system(size: 18, weight: .semibold))
         }
+        .gaugeStyle(.accessoryCircular)
+        .scaleEffect(2.0)
+        .tint(.blue)
+      } else {
+        // Indeterminate spinner
+        ProgressView()
+          .progressViewStyle(CircularProgressViewStyle(tint: .blue))
+          .scaleEffect(1.5)
       }
-      .padding(10)
-      .background(
-        RoundedRectangle(cornerRadius: 10, style: .continuous)
-          .fill(Color.black.opacity(0.8))
-      )
-      .padding(.horizontal)
-      .padding(.top, 12)
+
+      Text("Loading")
+        .foregroundColor(.primary)
+        .font(.system(size: 16, weight: .medium))
     }
-    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    .opacity(progress == 1.0 ? 0 : 1)
+    .animation(.easeOut(duration: 0.3), value: progress)
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
   }
 }
