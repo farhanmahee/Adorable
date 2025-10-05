@@ -8,6 +8,8 @@ public struct BundleLoadingView: View {
   }
 
   public var body: some View {
+    let displayProgress = max(progress ?? 0.0, 0.05)
+
     VStack(spacing: 16) {
       ZStack {
         // Base logo in secondary color
@@ -20,14 +22,14 @@ public struct BundleLoadingView: View {
           .mask(
             GeometryReader { geometry in
               Rectangle()
-                .frame(height: geometry.size.height * CGFloat(progress ?? 0.0))
-                .offset(y: geometry.size.height * CGFloat(1.0 - (progress ?? 0.0)))
+                .frame(height: geometry.size.height * CGFloat(displayProgress))
+                .offset(y: geometry.size.height * CGFloat(1.0 - displayProgress))
             }
           )
       }
       .aspectRatio(347.0/280.0, contentMode: .fit)
       .frame(width: 100)
-      .animation(.easeOut(duration: 0.3), value: progress)
+      .animation(.easeInOut(duration: 0.5), value: progress)
     }
     .opacity(progress == 1.0 ? 0 : 1)
     .animation(.easeOut(duration: 0.3), value: progress)
