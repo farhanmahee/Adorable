@@ -4,13 +4,21 @@ require File.join(File.dirname(`node --print "require.resolve('react-native/pack
 require 'json'
 podfile_properties = JSON.parse(File.read(File.join(__dir__, 'Podfile.properties.json'))) rescue {}
 
+# Force building React Native from source (disable prebuilt RNCore and RN dep)
+ENV['RCT_USE_PREBUILT_RNCORE'] = '0'
+ENV['RCT_USE_RN_DEP'] = '0'
+
 ENV['RCT_NEW_ARCH_ENABLED'] ||= '0' if podfile_properties['newArchEnabled'] == 'false'
 ENV['EX_DEV_CLIENT_NETWORK_INSPECTOR'] ||= podfile_properties['EX_DEV_CLIENT_NETWORK_INSPECTOR']
-ENV['RCT_USE_RN_DEP'] ||= '1' if podfile_properties['ios.buildReactNativeFromSource'] != 'true' && podfile_properties['newArchEnabled'] != 'false'
-ENV['RCT_USE_PREBUILT_RNCORE'] ||= '1' if podfile_properties['ios.buildReactNativeFromSource'] != 'true' && podfile_properties['newArchEnabled'] != 'false'
+# ENV['RCT_USE_RN_DEP'] ||= '1' if podfile_properties['ios.buildReactNativeFromSource'] != 'true' && podfile_properties['newArchEnabled'] != 'false'
+# ENV['RCT_USE_PREBUILT_RNCORE'] ||= '1' if podfile_properties['ios.buildReactNativeFromSource'] != 'true' && podfile_properties['newArchEnabled'] != 'false'
 platform :ios, podfile_properties['ios.deploymentTarget'] || '15.1'
 
 prepare_react_native_project!
+
+use_frameworks! :linkage => :static
+
+
 
 target 'mobile' do
 
@@ -55,5 +63,57 @@ target 'mobile' do
       :mac_catalyst_enabled => false,
       :ccache_enabled => podfile_properties['apple.ccacheEnabled'] == 'true',
     )
+
+    installer.target_installation_results.pod_target_installation_results
+      .each do |pod_name, target_installation_result|
+
+        if ['React-hermes', 'hermes-engine', 'React-RuntimeHermes'].include?(pod_name)
+          target_installation_result.native_target.build_configurations.each do |config|
+            next unless ['Debug', 'Release'].include?(config.name)
+            config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)']
+            # Enable Hermes debugger in Debug and Release so dev tooling works with Hermes
+            config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << "HERMES_ENABLE_DEBUGGER=1"
+          end
+        end
+        if ['React-jsinspector', 'React-RCTNetwork'].include?(pod_name)
+          target_installation_result.native_target.build_configurations.each do |config|
+            next unless ['Debug', 'Release'].include?(config.name)
+            config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)']
+            config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << "REACT_NATIVE_DEBUGGER_ENABLED=1"
+            # Allow debugger in Release too since dev macros are requested in Release
+            config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << "REACT_NATIVE_DEBUGGER_ENABLED_DEVONLY=1"
+          end
+        end
+
+        # Force Hermes Debug binary when building Release by marking hermes-engine Release with DEBUG=1.
+        # The Pods script "[Hermes] Replace Hermes for the right configuration" inspects GCC_PREPROCESSOR_DEFINITIONS
+        # to decide whether to use Debug or Release Hermes XCFramework.
+        if pod_name == 'hermes-engine'
+          target_installation_result.native_target.build_configurations.each do |config|
+            next unless config.name == 'Release'
+            config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)']
+            defs = config.build_settings['GCC_PREPROCESSOR_DEFINITIONS']
+            defs << 'DEBUG=1'
+          end
+        end
+
+        # next unless pod_name.start_with?('React') || pod_name == 'DevLauncher'
+            target_installation_result.native_target.build_configurations.each do |config|
+              next unless ['Debug', 'Release'].include?(config.name)
+              # C/ObjC/C++ macros
+              config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)']
+              defs = config.build_settings['GCC_PREPROCESSOR_DEFINITIONS']
+              defs << 'RCT_DEV=1'
+              defs << 'RCT_ENABLE_INSPECTOR=1'
+              defs << 'RCT_REMOTE_PROFILE=0'
+              defs << 'RCT_DEV_SETTINGS_ENABLE_PACKAGER_CONNECTION=1'
+
+              # Swift conditional compilation flags so #if RCT_DEV is true in Swift sources inside pods
+              existing_swift_flags = config.build_settings['SWIFT_ACTIVE_COMPILATION_CONDITIONS'] || '$(inherited)'
+              unless existing_swift_flags.to_s.include?('RCT_DEV')
+                config.build_settings['SWIFT_ACTIVE_COMPILATION_CONDITIONS'] = "#{existing_swift_flags} RCT_DEV RCT_DEV_MENU"
+              end
+        end
+      end
   end
 end

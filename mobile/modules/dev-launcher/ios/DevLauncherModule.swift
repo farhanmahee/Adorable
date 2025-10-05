@@ -1,5 +1,6 @@
 import ExpoModulesCore
 import UIKit
+import React
 
 public class DevLauncherModule: Module {
   public func definition() -> ModuleDefinition {
@@ -31,5 +32,21 @@ public class DevLauncherModule: Module {
         topController.present(reactViewController, animated: true)
       }
     }
+    AsyncFunction("detectMetroRunning") {
+       if RCTBundleURLProvider.isPackagerRunning("nnyue.vm.freestyle.sh:8081") {
+         return true
+       } else {
+         return false
+       }
+    }
+
+    Function("isRCTDevEnabled") {
+      #if RCT_DEV 
+      return true
+      #else
+      return false
+      #endif
+    }
+
   }
 }
