@@ -97,6 +97,8 @@ target 'mobile' do
           end
         end
 
+
+
         # next unless pod_name.start_with?('React') || pod_name == 'DevLauncher'
             target_installation_result.native_target.build_configurations.each do |config|
               next unless ['Debug', 'Release'].include?(config.name)

@@ -12,6 +12,8 @@ Pod::Spec.new do |s|
   s.swift_version  = '5.2'
   s.source         = { git: 'https://github.com/freestyle-sh/adorable' }
   s.static_framework = true
+  # Ensure SwiftUI framework is linked for the SwiftUI overlay
+  s.frameworks = 'SwiftUI'
 
   s.source_files = "**/*.{h,m,mm,swift,hpp,cpp}"
 
