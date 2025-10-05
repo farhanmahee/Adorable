@@ -6,7 +6,7 @@ Pod::Spec.new do |s|
   s.author         = '@theswerd'
   s.homepage       = 'https://docs.expo.dev/modules/'
   s.platforms      = {
-    :ios => '15.1'
+    :ios => '16.0'
   }
   s.swift_version  = '5.2'
   s.source         = { git: 'https://github.com/freestyle-sh/adorable' }
