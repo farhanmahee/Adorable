@@ -9,6 +9,7 @@ public struct BundleLoadingView: View {
 
   public var body: some View {
     let displayProgress = max(progress ?? 0.0, 0.05)
+    let isFull = displayProgress >= 1.0
 
     VStack(spacing: 16) {
       ZStack {
@@ -29,10 +30,10 @@ public struct BundleLoadingView: View {
       }
       .aspectRatio(347.0/280.0, contentMode: .fit)
       .frame(width: 100)
-      .animation(.easeInOut(duration: 0.5), value: progress)
+      .animation(.easeInOut(duration: 0.5), value: displayProgress)
+      .opacity(isFull ? 0 : 1)
+      .animation(.easeOut(duration: 0.3), value: displayProgress)
     }
-    .opacity(progress == 1.0 ? 0 : 1)
-    .animation(.easeOut(duration: 0.3), value: progress)
     .frame(maxWidth: .infinity, maxHeight: .infinity)
   }
 }
