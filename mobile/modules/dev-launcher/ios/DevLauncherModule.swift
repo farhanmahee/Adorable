@@ -8,6 +8,15 @@ public class DevLauncherModule: Module {
 
     Events("onLoad")
 
+    // Expose ReactBundleView as a native view component
+    View(ReactBundleView.self) {
+      Events("onLoad")
+
+      Prop("url") { (view: ReactBundleView, url: URL) in
+        view.loadBundle(url: url)
+      }
+    }
+
     // Load a React Native app from a bundle URL in a modal
     AsyncFunction("loadAppFromBundleUrl") { (urlString: String) in
       guard let url = URL(string: urlString) else {
