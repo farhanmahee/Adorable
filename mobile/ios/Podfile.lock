@@ -10,7 +10,7 @@ PODS:
     - ExpoModulesCore
   - EXManifests (1.0.8):
     - ExpoModulesCore
-  - Expo (54.0.10):
+  - Expo (54.0.12):
     - boost
     - DoubleConversion
     - ExpoModulesCore
@@ -136,7 +136,7 @@ PODS:
     - ExpoModulesCore
   - ExpoBlur (15.0.7):
     - ExpoModulesCore
-  - ExpoFileSystem (19.0.15):
+  - ExpoFileSystem (19.0.16):
     - ExpoModulesCore
   - ExpoFont (14.0.8):
     - ExpoModulesCore
@@ -156,7 +156,7 @@ PODS:
     - ExpoModulesCore
   - ExpoLinking (8.0.8):
     - ExpoModulesCore
-  - ExpoModulesCore (3.0.18):
+  - ExpoModulesCore (3.0.20):
     - boost
     - DoubleConversion
     - fast_float
@@ -190,6 +190,8 @@ PODS:
   - ExpoSymbols (1.0.7):
     - ExpoModulesCore
   - ExpoSystemUI (6.0.7):
+    - ExpoModulesCore
+  - ExpoUI (0.2.0-beta.6):
     - ExpoModulesCore
   - ExpoWebBrowser (15.0.7):
     - ExpoModulesCore
@@ -2856,6 +2858,7 @@ DEPENDENCIES:
   - ExpoSplashScreen (from `../node_modules/expo-splash-screen/ios`)
   - ExpoSymbols (from `../node_modules/expo-symbols/ios`)
   - ExpoSystemUI (from `../node_modules/expo-system-ui/ios`)
+  - "ExpoUI (from `../node_modules/@expo/ui/ios`)"
   - ExpoWebBrowser (from `../node_modules/expo-web-browser/ios`)
   - EXUpdatesInterface (from `../../vendor/expo/packages/expo-updates-interface/ios`)
   - fast_float (from `../node_modules/react-native/third-party-podspecs/fast_float.podspec`)
@@ -2989,6 +2992,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-symbols/ios"
   ExpoSystemUI:
     :path: "../node_modules/expo-system-ui/ios"
+  ExpoUI:
+    :path: "../node_modules/@expo/ui/ios"
   ExpoWebBrowser:
     :path: "../node_modules/expo-web-browser/ios"
   EXUpdatesInterface:
@@ -3149,22 +3154,23 @@ SPEC CHECKSUMS:
   DoubleConversion: cb417026b2400c8f53ae97020b2be961b59470cb
   EXConstants: a95804601ee4a6aa7800645f9b070d753b1142b3
   EXManifests: 224345a575fca389073c416297b6348163f28d1a
-  Expo: b2748512b0df06c1e569f93372b53c488f02ffe7
+  Expo: 59df4497c1db30b7824f49e5724b90aaffec04d9
   expo-dev-menu: 06b35b962da6d4ea2c8243176030fb5973f166df
   expo-dev-menu-interface: 600df12ea01efecdd822daaf13cc0ac091775533
   ExpoAsset: 9ba6fbd677fb8e241a3899ac00fa735bc911eadf
   ExpoBlur: 2dd8f64aa31f5d405652c21d3deb2d2588b1852f
-  ExpoFileSystem: 5fb091ea11198e109ceef2bdef2e6e66523e62c4
+  ExpoFileSystem: f4bf6bac4ede3b6671c22777f01102a02a028412
   ExpoFont: 86ceec09ffed1c99cfee36ceb79ba149074901b5
   ExpoHaptics: 807476b0c39e9d82b7270349d6487928ce32df84
   ExpoHead: 5570e5edbe54fd8f88e51e8b94bf2931caaa7363
   ExpoImage: e88f500585913969b930e13a4be47277eb7c6de8
   ExpoKeepAwake: 1a2e820692e933c94a565ec3fbbe38ac31658ffe
   ExpoLinking: f051f28e50ea9269ff539317c166adec81d9342d
-  ExpoModulesCore: e1b5401a7af4c7dbf4fe26b535918a72c6ed8a7b
+  ExpoModulesCore: 110490095f5bf1c110673078832c6792c08ca8cd
   ExpoSplashScreen: cbb839de72110dea1851dd3e85080b7923af2540
   ExpoSymbols: 1ae04ce686de719b9720453b988d8bc5bf776c68
   ExpoSystemUI: 6cd74248a2282adf6dec488a75fa532d69dee314
+  ExpoUI: 88c52002a55a8ac4e552230f6dc4b7f8718d2137
   ExpoWebBrowser: 533bc2a1b188eec1c10e4926decf658f1687b5e5
   EXUpdatesInterface: 5adf50cb41e079c861da6d9b4b954c3db9a50734
   fast_float: b32c788ed9c6a8c584d114d0047beda9664e7cc6

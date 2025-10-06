@@ -1,8 +1,8 @@
 import * as React from 'react';
-import { StyleSheet, TouchableOpacity, View, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, ActivityIndicator } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { ReactBundleView } from '@/modules/dev-launcher';
-import { Ionicons } from '@expo/vector-icons';
+import { Host, Button } from '@expo/ui/swift-ui';
 
 const LoadingView = React.forwardRef<View>((props, ref) => (
   <View ref={ref} style={styles.loadingContainer} {...props}>
@@ -18,12 +18,14 @@ export default function ReactBundleViewScreen() {
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={styles.container}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backButton}
-        >
-          <Ionicons name="arrow-back" size={24} color="#007AFF" />
-        </TouchableOpacity>
+        <Host style={styles.backButtonHost}>
+          <Button
+            systemImage="chevron.left"
+            variant="glass"
+            onPress={() => router.back()}
+            >
+          </Button>
+        </Host>
         <ReactBundleView
           url="https://nnyue.vm.freestyle.sh/node_modules/expo-router/entry.bundle?platform=ios&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable"
           onLoad={(event) => console.log('Bundle loaded:', event.nativeEvent.url)}
@@ -38,12 +40,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  backButton: {
+  backButtonHost: {
     position: 'absolute',
     top: 50,
-    left: 16,
+    left: 24,
+    padding: 20,
     zIndex: 1000,
-    padding: 8,
   },
   bundleView: {
     flex: 1,
