@@ -32,14 +32,11 @@ export default function HomeScreen() {
       }>
      
       <ThemedView style={styles.stepContainer}>
-        <Button title="Go to Detailing" onPress={async () => {
-         await DevLauncherModule.loadAppFromBundleUrl("https://nnyue.vm.freestyle.sh/node_modules/expo-router/entry.bundle?platform=ios&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable")
-        // await DevLauncherModule.loadAppFromBundleUrl("http://localhost:8081/node_modules/expo-router/entry.bundle?platform=ios&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable")
-        }} />
+        
         <Button title="Open Via React Native" onPress={() => {
           router.push('/react-bundle-view');
         }} />
-        <ThemedText>Is Duper Metro Running: {isMetroRunning == null ? 'Unknown' : isMetroRunning ? 'Yes' : 'No'}</ThemedText>
+        <ThemedText>Is Metro Running: {isMetroRunning == null ? 'Unknown' : isMetroRunning ? 'Yes' : 'No'}</ThemedText>
         <ThemedText>Is RCTDev Enabled: {DevLauncherModule.isRCTDevEnabled() ? 'Yes' : 'No'}</ThemedText>
       </ThemedView>
   
