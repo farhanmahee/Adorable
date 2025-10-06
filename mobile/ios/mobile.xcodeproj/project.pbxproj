@@ -12,6 +12,7 @@
 		6848DC115FB3F5CC20A319CA /* Pods_mobile.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 60A493EA99995D099E930E6E /* Pods_mobile.framework */; };
 		85BE185C63CB065F301F8501 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07599446DDFFE5F8E3737B23 /* ExpoModulesProvider.swift */; };
 		89F55C4880E75E19DD67B405 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 7A04E5BE75982D7B08809F55 /* PrivacyInfo.xcprivacy */; };
+		B5894B6C2E9345F400ED4505 /* RCTDevLoadingView+NoOp.m in Sources */ = {isa = PBXBuildFile; fileRef = B5894B6B2E9345F400ED4505 /* RCTDevLoadingView+NoOp.m */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
@@ -25,6 +26,8 @@
 		7A04E5BE75982D7B08809F55 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = mobile/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = mobile/SplashScreen.storyboard; sourceTree = "<group>"; };
 		B2B64F7A0B1C9FFAD5867821 /* Pods-mobile.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-mobile.debug.xcconfig"; path = "Target Support Files/Pods-mobile/Pods-mobile.debug.xcconfig"; sourceTree = "<group>"; };
+		B5894B6A2E9345F400ED4505 /* RCTDevLoadingView+NoOp.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "RCTDevLoadingView+NoOp.h"; sourceTree = "<group>"; };
+		B5894B6B2E9345F400ED4505 /* RCTDevLoadingView+NoOp.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "RCTDevLoadingView+NoOp.m"; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = mobile/AppDelegate.swift; sourceTree = "<group>"; };
@@ -54,6 +57,8 @@
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
 				7A04E5BE75982D7B08809F55 /* PrivacyInfo.xcprivacy */,
+				B5894B6A2E9345F400ED4505 /* RCTDevLoadingView+NoOp.h */,
+				B5894B6B2E9345F400ED4505 /* RCTDevLoadingView+NoOp.m */,
 			);
 			name = mobile;
 			sourceTree = "<group>";
@@ -328,6 +333,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B5894B6C2E9345F400ED4505 /* RCTDevLoadingView+NoOp.m in Sources */,
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
 				85BE185C63CB065F301F8501 /* ExpoModulesProvider.swift in Sources */,
 			);
