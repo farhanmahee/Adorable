@@ -1,8 +1,9 @@
 import * as React from 'react';
 import { StyleSheet, View, ActivityIndicator } from 'react-native';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { ReactBundleView } from '@/modules/dev-launcher';
 import { Host, Button } from '@expo/ui/swift-ui';
+import { getApp } from './stub';
 
 const LoadingView = React.forwardRef<View>((props, ref) => (
   <View ref={ref} style={styles.loadingContainer} {...props}>
@@ -13,6 +14,16 @@ LoadingView.displayName = 'LoadingView';
 
 export default function ReactBundleViewScreen() {
   const router = useRouter();
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const app = getApp(id);
+
+  if (!app) {
+    return (
+      <View style={styles.container}>
+        <Stack.Screen options={{ headerShown: false }} />
+      </View>
+    );
+  }
 
   return (
     <>
@@ -27,7 +38,7 @@ export default function ReactBundleViewScreen() {
           </Button>
         </Host>
         <ReactBundleView
-          url="https://nnyue.vm.freestyle.sh/node_modules/expo-router/entry.bundle?platform=ios&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stable"
+          url={app.bundleUrl}
           onLoad={(event) => console.log('Bundle loaded:', event.nativeEvent.url)}
           style={styles.bundleView}
         />
