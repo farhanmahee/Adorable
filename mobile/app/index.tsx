@@ -6,7 +6,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemedView } from "@/components/themed-view";
 import DevLauncherModule from "@/modules/dev-launcher/src/DevLauncherModule";
 import { ThemedText } from "@/components/themed-text";
-import { listApps, type App } from "./stub";
+import { listApps, type App } from "../lib/stub";
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -28,7 +28,7 @@ export default function HomeScreen() {
       <Button
         title={item.name}
         onPress={() => {
-          router.push(`/${item.id}`);
+          router.push(`/app/${item.id}`);
         }}
       />
     </ThemedView>

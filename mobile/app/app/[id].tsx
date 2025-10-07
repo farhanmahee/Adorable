@@ -3,7 +3,7 @@ import { StyleSheet, View, ActivityIndicator } from 'react-native';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { ReactBundleView } from '@/modules/dev-launcher';
 import { Host, Button } from '@expo/ui/swift-ui';
-import { getApp } from './stub';
+import { getApp } from '../../lib/stub';
 
 const LoadingView = React.forwardRef<View>((props, ref) => (
   <View ref={ref} style={styles.loadingContainer} {...props}>
