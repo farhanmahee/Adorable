@@ -18,6 +18,7 @@ Pod::Spec.new do |s|
 
   # Dependencies
   s.dependency 'ExpoModulesCore'
+  s.dependency 'ExpoLinking'
   s.dependency 'React-Core'
   s.dependency 'React-RCTAppDelegate'
   s.dependency 'ReactAppDependencyProvider'

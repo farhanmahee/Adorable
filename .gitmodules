@@ -2,3 +2,6 @@
 	path = vendor/expo
 	url = https://github.com/freestyle-sh/expo
 	branch = dev-prod-available
+[submodule "vendor/react-native"]
+	path = vendor/react-native
+	url = git@github.com:freestyle-sh/expo-react-native.git

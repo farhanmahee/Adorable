@@ -3,6 +3,7 @@ import SwiftUI
 import React
 import React_RCTAppDelegate
 import ReactAppDependencyProvider
+@_spi(DevLauncher) import ExpoLinking
 
 // Notification name exposed by our Obj-C swizzle to receive progress updates.
 private let kBundleLoadingProgressNotification = Notification.Name("BundleLoadingProgressNotification")
@@ -37,6 +38,10 @@ class ReactBundleViewController: UIViewController {
 
     // Disable React Native Dev Loading View progress overlay for this controller
     RCTDevLoadingViewSetEnabled(false)
+
+    // Clear the initial URL so embedded apps don't receive outer app's URL
+    ExpoLinkingRegistry.shared.initialURL = nil
+    NSLog("[BLV] Cleared ExpoLinkingRegistry initial URL")
 
     // Observe content appearance to hide overlay as soon as the first RN content renders.
     NotificationCenter.default.addObserver(self,

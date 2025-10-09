@@ -1,6 +1,7 @@
 PODS:
   - boost (1.84.0)
   - DevLauncher (1.0.0):
+    - ExpoLinking
     - ExpoModulesCore
     - React-Core
     - React-RCTAppDelegate
@@ -2853,7 +2854,7 @@ DEPENDENCIES:
   - ExpoHead (from `../node_modules/expo-router/ios`)
   - ExpoImage (from `../node_modules/expo-image/ios`)
   - ExpoKeepAwake (from `../node_modules/expo-keep-awake/ios`)
-  - ExpoLinking (from `../node_modules/expo-linking/ios`)
+  - ExpoLinking (from `../../vendor/expo/packages/expo-linking/ios`)
   - ExpoModulesCore (from `../node_modules/expo-modules-core`)
   - ExpoSplashScreen (from `../node_modules/expo-splash-screen/ios`)
   - ExpoSymbols (from `../node_modules/expo-symbols/ios`)
@@ -2983,7 +2984,7 @@ EXTERNAL SOURCES:
   ExpoKeepAwake:
     :path: "../node_modules/expo-keep-awake/ios"
   ExpoLinking:
-    :path: "../node_modules/expo-linking/ios"
+    :path: "../../vendor/expo/packages/expo-linking/ios"
   ExpoModulesCore:
     :path: "../node_modules/expo-modules-core"
   ExpoSplashScreen:
@@ -3150,7 +3151,7 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   boost: 7e761d76ca2ce687f7cc98e698152abd03a18f90
-  DevLauncher: 8a65eb8c6dcb7ba0126b7b1bb85b0a72d004d29f
+  DevLauncher: 0c3cc22d3a3eb97460a4a3f9c471b86a830d5a41
   DoubleConversion: cb417026b2400c8f53ae97020b2be961b59470cb
   EXConstants: a95804601ee4a6aa7800645f9b070d753b1142b3
   EXManifests: 224345a575fca389073c416297b6348163f28d1a
@@ -3256,6 +3257,6 @@ SPEC CHECKSUMS:
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
   Yoga: 9b30b783a17681321b52ac507a37219d7d795ace
 
-PODFILE CHECKSUM: beb940adc3e1b72f0b603927d55300eaa85fe385
+PODFILE CHECKSUM: 8eb62f04a2b549e2b616433c48afd2e9f841bc86
 
 COCOAPODS: 1.16.2

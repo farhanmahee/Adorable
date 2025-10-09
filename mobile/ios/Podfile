@@ -27,6 +27,7 @@ target 'mobile' do
   pod "EXManifests", :path => "../../vendor/expo/packages/expo-manifests/ios"
   pod "EXUpdatesInterface", :path => "../../vendor/expo/packages/expo-updates-interface/ios"
   pod "expo-dev-menu", :path => "../../vendor/expo/packages/expo-dev-menu"
+  pod "ExpoLinking", :path => "../../vendor/expo/packages/expo-linking/ios"
 
   use_expo_modules!
 
