@@ -15,7 +15,249 @@ import {
   primaryKey,
 } from "drizzle-orm/pg-core";
 import { drizzle } from "drizzle-orm/node-postgres";
+// INVENTORY MANAGEMENT SCHEMA EXTENSIONS
 
+// Cylinder Management
+export const cylinderMastersTable = pgTable("cylinder_masters", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  organizationId: uuid("organization_id").notNull().references(() => organizationTable.id),
+  branchId: uuid("branch_id").notNull().references(() => branchTable.id),
+  cylinderCode: text("cylinder_code").notNull().unique(),
+  cylinderType: text("cylinder_type").notNull(), // 'empty', 'refill', 'package', 'service'
+  capacity: decimal("capacity", { precision: 10, scale: 2 }),
+  weight: decimal("weight", { precision: 10, scale: 2 }),
+  status: text("status").default("active"), // 'active', 'damaged', 'in_transit', 'recovered'
+  location: text("location"),
+  warehouseId: uuid("warehouse_id").references(() => warehouseTable.id),
+  lastUpdated: timestamp("last_updated").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Cylinder Transactions/Flows
+export const cylinderFlowsTable = pgTable("cylinder_flows", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  cylinderId: uuid("cylinder_id").notNull().references(() => cylinderMastersTable.id),
+  flowType: text("flow_type").notNull(), // 'empty_received', 'refilled', 'packaged', 'transit_in', 'transit_out', 'damaged', 'recovered', 'remake'
+  sourceWarehouse: uuid("source_warehouse").references(() => warehouseTable.id),
+  destinationWarehouse: uuid("destination_warehouse").references(() => warehouseTable.id),
+  quantity: integer("quantity").default(1),
+  transactionDate: timestamp("transaction_date").defaultNow(),
+  referenceNumber: text("reference_number"), // PO, GRN, etc.
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Inventory Items
+export const inventoryItemsTable = pgTable("inventory_items", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  organizationId: uuid("organization_id").notNull().references(() => organizationTable.id),
+  itemCode: text("item_code").notNull().unique(),
+  itemName: text("item_name").notNull(),
+  itemType: text("item_type").notNull(), // 'cylinder', 'package', 'general', 'service'
+  description: text("description"),
+  unit: text("unit"), // 'pcs', 'kg', 'ltr', etc.
+  uom: text("uom"), // unit of measurement
+  hsn: text("hsn"), // HSN/SAC code
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Stock Ledger
+export const stockLedgerTable = pgTable("stock_ledger", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  warehouseId: uuid("warehouse_id").notNull().references(() => warehouseTable.id),
+  itemId: uuid("item_id").notNull().references(() => inventoryItemsTable.id),
+  openingQty: decimal("opening_qty", { precision: 15, scale: 2 }).default("0"),
+  inwardQty: decimal("inward_qty", { precision: 15, scale: 2 }).default("0"),
+  outwardQty: decimal("outward_qty", { precision: 15, scale: 2 }).default("0"),
+  balanceQty: decimal("balance_qty", { precision: 15, scale: 2 }).default("0"),
+  lastValuation: decimal("last_valuation", { precision: 15, scale: 2 }).default("0"),
+  valuationMethod: text("valuation_method").default("weighted_average"), // FIFO, LIFO, weighted_average
+  transactionDate: timestamp("transaction_date").defaultNow(),
+});
+
+// PURCHASE MODULE
+export const purchaseOrdersTable = pgTable("purchase_orders", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  organizationId: uuid("organization_id").notNull().references(() => organizationTable.id),
+  poNumber: text("po_number").notNull().unique(),
+  supplierId: uuid("supplier_id").notNull().references(() => supplierTable.id),
+  poDate: timestamp("po_date").defaultNow(),
+  expectedDeliveryDate: timestamp("expected_delivery_date"),
+  status: text("status").default("draft"), // draft, confirmed, partial_received, received, cancelled
+  totalAmount: decimal("total_amount", { precision: 15, scale: 2 }),
+  taxAmount: decimal("tax_amount", { precision: 15, scale: 2 }),
+  grandTotal: decimal("grand_total", { precision: 15, scale: 2 }),
+  notes: text("notes"),
+  createdBy: uuid("created_by"),
+  approvedBy: uuid("approved_by"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const purchaseOrderItemsTable = pgTable("purchase_order_items", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  poId: uuid("po_id").notNull().references(() => purchaseOrdersTable.id),
+  itemId: uuid("item_id").notNull().references(() => inventoryItemsTable.id),
+  quantity: decimal("quantity", { precision: 15, scale: 2 }).notNull(),
+  rate: decimal("rate", { precision: 15, scale: 2 }).notNull(),
+  amount: decimal("amount", { precision: 15, scale: 2 }),
+  tax: decimal("tax", { precision: 15, scale: 2 }),
+  totalAmount: decimal("total_amount", { precision: 15, scale: 2 }),
+  receivedQty: decimal("received_qty", { precision: 15, scale: 2 }).default("0"),
+});
+
+// GRN (Goods Received Note)
+export const grnTable = pgTable("grn", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  organizationId: uuid("organization_id").notNull().references(() => organizationTable.id),
+  grnNumber: text("grn_number").notNull().unique(),
+  poId: uuid("po_id").references(() => purchaseOrdersTable.id),
+  supplierInvoiceNo: text("supplier_invoice_no"),
+  grnDate: timestamp("grn_date").defaultNow(),
+  warehouseId: uuid("warehouse_id").notNull().references(() => warehouseTable.id),
+  totalQty: decimal("total_qty", { precision: 15, scale: 2 }),
+  totalAmount: decimal("total_amount", { precision: 15, scale: 2 }),
+  status: text("status").default("pending"), // pending, verified, rejected, posted
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const grnItemsTable = pgTable("grn_items", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  grnId: uuid("grn_id").notNull().references(() => grnTable.id),
+  itemId: uuid("item_id").notNull().references(() => inventoryItemsTable.id),
+  poItemId: uuid("po_item_id").references(() => purchaseOrderItemsTable.id),
+  orderedQty: decimal("ordered_qty", { precision: 15, scale: 2 }),
+  receivedQty: decimal("received_qty", { precision: 15, scale: 2 }).notNull(),
+  damageQty: decimal("damage_qty", { precision: 15, scale: 2 }).default("0"),
+  rate: decimal("rate", { precision: 15, scale: 2 }),
+  amount: decimal("amount", { precision: 15, scale: 2 }),
+});
+
+// Transit Management
+export const transitTable = pgTable("transit", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  organizationId: uuid("organization_id").notNull().references(() => organizationTable.id),
+  transitNumber: text("transit_number").notNull().unique(),
+  sourceWarehouse: uuid("source_warehouse").notNull().references(() => warehouseTable.id),
+  destinationWarehouse: uuid("destination_warehouse").notNull().references(() => warehouseTable.id),
+  transitDate: timestamp("transit_date").defaultNow(),
+  expectedDelivery: timestamp("expected_delivery"),
+  actualDelivery: timestamp("actual_delivery"),
+  status: text("status").default("in_transit"), // in_transit, delivered, returned, lost
+  vehicleNo: text("vehicle_no"),
+  driveName: text("driver_name"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const transitItemsTable = pgTable("transit_items", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  transitId: uuid("transit_id").notNull().references(() => transitTable.id),
+  itemId: uuid("item_id").notNull().references(() => inventoryItemsTable.id),
+  quantity: decimal("quantity", { precision: 15, scale: 2 }).notNull(),
+  receivedQty: decimal("received_qty", { precision: 15, scale: 2 }).default("0"),
+  damagedQty: decimal("damaged_qty", { precision: 15, scale: 2 }).default("0"),
+});
+
+// Supplier Ledger
+export const supplierLedgerTable = pgTable("supplier_ledger", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  supplierId: uuid("supplier_id").notNull().references(() => supplierTable.id),
+  referenceType: text("reference_type"), // PO, GRN, Voucher
+  referenceId: uuid("reference_id"),
+  description: text("description"),
+  debit: decimal("debit", { precision: 15, scale: 2 }).default("0"),
+  credit: decimal("credit", { precision: 15, scale: 2 }).default("0"),
+  balance: decimal("balance", { precision: 15, scale: 2 }).default("0"),
+  transactionDate: timestamp("transaction_date").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Supplier Master
+export const supplierTable = pgTable("suppliers", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  organizationId: uuid("organization_id").notNull().references(() => organizationTable.id),
+  supplierCode: text("supplier_code").notNull().unique(),
+  supplierName: text("supplier_name").notNull(),
+  contactPerson: text("contact_person"),
+  email: text("email"),
+  phone: text("phone"),
+  address: text("address"),
+  city: text("city"),
+  country: text("country").default("Bangladesh"),
+  gstin: text("gstin"),
+  panNo: text("pan_no"),
+  paymentTerms: text("payment_terms"),
+  creditLimit: decimal("credit_limit", { precision: 15, scale: 2 }),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// SALES MODULE
+export const salesOrdersTable = pgTable("sales_orders", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  organizationId: uuid("organization_id").notNull().references(() => organizationTable.id),
+  soNumber: text("so_number").notNull().unique(),
+  customerId: uuid("customer_id").notNull().references(() => customerTable.id),
+  soDate: timestamp("so_date").defaultNow(),
+  deliveryDate: timestamp("delivery_date"),
+  status: text("status").default("draft"), // draft, confirmed, partial_delivered, delivered, cancelled
+  totalAmount: decimal("total_amount", { precision: 15, scale: 2 }),
+  taxAmount: decimal("tax_amount", { precision: 15, scale: 2 }),
+  grandTotal: decimal("grand_total", { precision: 15, scale: 2 }),
+  paymentStatus: text("payment_status").default("pending"), // pending, partial, completed
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const salesOrderItemsTable = pgTable("sales_order_items", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  soId: uuid("so_id").notNull().references(() => salesOrdersTable.id),
+  itemId: uuid("item_id").notNull().references(() => inventoryItemsTable.id),
+  quantity: decimal("quantity", { precision: 15, scale: 2 }).notNull(),
+  rate: decimal("rate", { precision: 15, scale: 2 }).notNull(),
+  amount: decimal("amount", { precision: 15, scale: 2 }),
+  tax: decimal("tax", { precision: 15, scale: 2 }),
+  totalAmount: decimal("total_amount", { precision: 15, scale: 2 }),
+  deliveredQty: decimal("delivered_qty", { precision: 15, scale: 2 }).default("0"),
+});
+
+// Customer Master
+export const customerTable = pgTable("customers", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  organizationId: uuid("organization_id").notNull().references(() => organizationTable.id),
+  customerCode: text("customer_code").notNull().unique(),
+  customerName: text("customer_name").notNull(),
+  contactPerson: text("contact_person"),
+  email: text("email"),
+  phone: text("phone"),
+  address: text("address"),
+  city: text("city"),
+  country: text("country").default("Bangladesh"),
+  gstin: text("gstin"),
+  creditLimit: decimal("credit_limit", { precision: 15, scale: 2 }),
+  outstandingBalance: decimal("outstanding_balance", { precision: 15, scale: 2 }).default("0"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Customer Ledger
+export const customerLedgerTable = pgTable("customer_ledger", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  customerId: uuid("customer_id").notNull().references(() => customerTable.id),
+  referenceType: text("reference_type"), // SO, Invoice, Receipt
+  referenceId: uuid("reference_id"),
+  description: text("description"),
+  debit: decimal("debit", { precision: 15, scale: 2 }).default("0"),
+  credit: decimal("credit", { precision: 15, scale: 2 }).default("0"),
+  balance: decimal("balance", { precision: 15, scale: 2 }).default("0"),
+  transactionDate: timestamp("transaction_date
+").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
 export const db = drizzle(process.env.DATABASE_URL!);
 
 // ============================================
