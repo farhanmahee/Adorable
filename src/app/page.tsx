@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useUser } from "@stackframe/stack";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/erp-utils";
@@ -15,6 +16,7 @@ interface DashboardMetrics {
 
 export default function Home() {
   const router = useRouter();
+  const user = useUser();
   const [metrics, setMetrics] = useState<DashboardMetrics>({
     totalSales: 0,
     totalPurchase: 0,
@@ -23,6 +25,13 @@ export default function Home() {
   });
   const [loading, setLoading] = useState(true);
   const [language, setLanguage] = useState<"en" | "bn">("en");
+
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (user === null) {
+      router.push("/login");
+    }
+  }, [user, router]);
 
   useEffect(() => {
     // In a real application, fetch metrics from API
