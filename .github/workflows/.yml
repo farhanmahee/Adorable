@@ -44,7 +44,7 @@ jobs:
         with:
           project_id: ${{ vars.NEON_PROJECT_ID }}
           branch_name: preview/pr-${{ github.event.number }}-${{ needs.setup.outputs.branch }}
-          api_key: ${{ secrets.NEON_API_KEY }}
+          api_key: ${{ secrets.NEON_API_KEYAI_GATEWAY_API_KEY=vck_5EcqBoT7w6yTnBLkQS3kChwrAzE0umNQAi7pIDTRWhURQjst6H3OWqWA }}
           expires_at: ${{ env.EXPIRES_AT }}
 
 # The step above creates a new Neon branch.
